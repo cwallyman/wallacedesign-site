@@ -10,15 +10,15 @@ Small static web app that shows the next 3 SEPTA Regional Rail trains between:
 Start the local server:
 
 ```bash
-cd "/Users/cwallyman/Library/Mobile Documents/com~apple~CloudDocs/Coding/w3dprints-site/docs/apps/next trains"
+cd "docs/apps/next trains"
 python3 server.py
 ```
 
 Then open `http://127.0.0.1:8000`.
 
-## Publish on w3dprints.net
+## Publish on wallacedesign.org
 
-`w3dprints.net` is hosted as a static GitHub Pages site, so the live SEPTA lookup needs a separate proxy.
+`wallacedesign.org` is hosted as a static GitHub Pages site, so the live SEPTA lookup needs a separate proxy.
 
 This repo now includes a Cloudflare Worker proxy at:
 
@@ -26,7 +26,7 @@ This repo now includes a Cloudflare Worker proxy at:
 
 The public app is configured to call:
 
-`https://api.w3dprints.net/api/next-trains`
+`https://api.wallacedesign.org/api/next-trains`
 
 ### Deploy the proxy
 
@@ -45,11 +45,11 @@ wrangler login
 3. Deploy from the worker folder:
 
 ```bash
-cd "/Users/cwallyman/Library/Mobile Documents/com~apple~CloudDocs/Coding/w3dprints-site/cloudflare/septa-next-trains-proxy"
+cd "cloudflare/septa-next-trains-proxy"
 wrangler deploy
 ```
 
-4. In Cloudflare DNS, make sure `api.w3dprints.net` is routed through Cloudflare and points at the Worker route.
+4. In Cloudflare DNS, make sure `api.wallacedesign.org` is routed through Cloudflare and points at the Worker route.
 
 5. Push the `docs/` changes to GitHub Pages.
 
@@ -58,6 +58,6 @@ wrangler deploy
 - The app uses SEPTA's official `Next To Arrive` endpoint.
 - A tiny Python proxy avoids browser issues reaching the older SEPTA API directly.
 - The page now also falls back to the local proxy if it is opened from another local site or directly from disk.
-- On `w3dprints.net`, the app uses the Cloudflare Worker proxy at `api.w3dprints.net`.
+- On `wallacedesign.org`, the app uses the Cloudflare Worker proxy at `api.wallacedesign.org`.
 - It requests 3 results and supports swapping the route direction.
 - Auto-refresh runs every 30 seconds by default.

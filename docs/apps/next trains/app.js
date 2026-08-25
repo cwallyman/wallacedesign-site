@@ -87,7 +87,7 @@ const LINE_CONFIGS = {
 const DEFAULT_LINE_ID = "paoliThorndale";
 
 const LOCAL_PROXY_ORIGIN = "http://127.0.0.1:8000";
-const PRODUCTION_PROXY_ORIGIN = "https://api.w3dprints.net";
+const PRODUCTION_PROXY_ORIGIN = "https://api.wallacedesign.org";
 
 const lineButtons = Array.from(document.querySelectorAll(".line-button"));
 const originSelect = document.querySelector("#origin");
@@ -192,8 +192,8 @@ function normalizeErrorMessage(message) {
     text.includes("NetworkError") ||
     text.includes("Load failed")
   ) {
-    if (host === "w3dprints.net" || host === "www.w3dprints.net") {
-      return "Could not reach api.w3dprints.net yet. Finish the Cloudflare DNS setup for the production proxy, then reload the page.";
+    if (host === "wallacedesign.org" || host === "www.wallacedesign.org") {
+      return "Could not reach api.wallacedesign.org yet. Finish the Cloudflare DNS setup for the production proxy, then reload the page.";
     }
 
     return "Could not reach the local train proxy. Start it with `python3 server.py`, then open http://127.0.0.1:8000.";
@@ -283,7 +283,7 @@ function getApiUrls() {
     return ["/api/next-trains"];
   }
 
-  if (host === "w3dprints.net" || host === "www.w3dprints.net") {
+  if (host === "wallacedesign.org" || host === "www.wallacedesign.org") {
     return [productionApiUrl];
   }
 

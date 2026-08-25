@@ -64,7 +64,7 @@ export default {
         fetch(septaUrl.toString(), {
           headers: {
             Accept: "application/json",
-            "User-Agent": "w3dprints-next-trains-proxy",
+            "User-Agent": "wallacedesign-next-trains-proxy",
           },
           cf: {
             cacheTtl: 0,
@@ -92,7 +92,7 @@ export default {
       const trainViewResponse = await fetch(SEPTA_TRAIN_VIEW_URL, {
         headers: {
           Accept: "application/json",
-          "User-Agent": "w3dprints-next-trains-proxy",
+          "User-Agent": "wallacedesign-next-trains-proxy",
         },
         cf: {
           cacheTtl: 0,

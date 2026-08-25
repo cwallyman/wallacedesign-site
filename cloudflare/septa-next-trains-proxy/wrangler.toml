@@ -3,5 +3,5 @@ main = "src/index.js"
 compatibility_date = "2026-03-31"
 
 routes = [
-  { pattern = "api.w3dprints.net/*", zone_name = "w3dprints.net" }
+  { pattern = "api.wallacedesign.org/*", zone_name = "wallacedesign.org" }
 ]

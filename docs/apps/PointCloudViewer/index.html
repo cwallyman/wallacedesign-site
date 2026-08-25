@@ -874,7 +874,7 @@ function buildLAS(data) {
   writeAscii(dv, 0, 'LASF', 4);
   dv.setUint16(24, 1, true);
   dv.setUint8(25, 2);
-  writeAscii(dv, 26, 'w3dprints.net PointCloud converter', 32);
+  writeAscii(dv, 26, 'wallacedesign.org PointCloud converter', 32);
   writeAscii(dv, 58, 'PointCloudViewer', 32);
   dv.setUint16(90, getDayOfYear(), true);
   dv.setUint16(92, new Date().getFullYear(), true);
