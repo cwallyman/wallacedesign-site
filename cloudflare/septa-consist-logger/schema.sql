@@ -18,5 +18,6 @@ CREATE TABLE IF NOT EXISTS observations (
 );
 
 CREATE INDEX IF NOT EXISTS idx_trips_trainno_date ON trips(trainno, service_date);
+CREATE INDEX IF NOT EXISTS idx_trips_service_date ON trips(service_date);
 CREATE INDEX IF NOT EXISTS idx_trips_last_seen ON trips(last_seen_at);
 CREATE INDEX IF NOT EXISTS idx_obs_trip ON observations(trip_id);

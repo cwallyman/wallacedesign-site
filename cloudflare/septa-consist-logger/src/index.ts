@@ -1,7 +1,13 @@
 import { fetchTrainView, serviceDateFor } from "./septa";
-import { ingestTrainView, type TripRow } from "./db";
+import { ingestTrainView, pruneOldData, type TripRow } from "./db";
 import { buildTripsWorkbook } from "./export";
 import { sendDailyExportEmail } from "./email";
+
+/** How many days of trips/observations to keep. Data older than this is
+ * deleted once a day — the nightly export email is the durable record, so
+ * there's no need to keep it in D1 (and keeping it unbounded is what was
+ * driving the daily D1 rows_read limit over). */
+const RETENTION_DAYS = 2;
 
 export interface Env {
   DB: D1Database;
@@ -159,6 +165,15 @@ export default {
             console.log(`[daily export ${nowIso}] sent for ${serviceDate}`);
           } catch (err) {
             console.error("daily export email failed", err);
+          }
+
+          try {
+            const pruned = await pruneOldData(env.DB, serviceDate, RETENTION_DAYS);
+            console.log(
+              `[prune ${nowIso}] deleted trips=${pruned.trips} observations=${pruned.observations}`
+            );
+          } catch (err) {
+            console.error("prune failed", err);
           }
         }
       })()

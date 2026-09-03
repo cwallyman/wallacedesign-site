@@ -25,6 +25,11 @@ This is a single Cloudflare Worker with three moving parts:
    Worker builds an `.xlsx` of that day's trips and emails it via Resend.
    The 23:59 check is done from wall-clock local time (not a fixed UTC cron
    offset), so it stays correct across DST changes automatically.
+4. **Daily pruning** — right after the export email, trips/observations
+   older than `RETENTION_DAYS` (2, in `src/index.ts`) are deleted from D1.
+   The daily email is the durable record; D1 only needs to hold enough
+   history to serve the live web UI. This also keeps D1's `rows_read`
+   usage bounded instead of growing without limit as history piles up.
 
 ```
 SEPTA TrainView API
@@ -51,7 +56,8 @@ SEPTA TrainView API
 - **Live trip table** for any service date, showing train #, line, source,
   destination, current consist, and first/last seen times.
 - **Search by car number** — every trip a given railcar has appeared in,
-  across all logged days.
+  across all logged days still in D1 (see Daily pruning above — currently
+  the last `RETENTION_DAYS` days).
 - **Search by train number** — a single trip's full consist-change history
   for the day.
 - **`.xlsx` export** — `GET /api/export?date=YYYY-MM-DD` (also a button in

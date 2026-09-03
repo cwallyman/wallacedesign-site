@@ -1,4 +1,5 @@
 import type { TrainViewEntry } from "./septa";
+import { shiftServiceDate } from "./septa";
 
 /** If a train number reappears more than this long after we last saw it,
  * treat it as a new trip rather than a continuation (SEPTA reuses train
@@ -135,4 +136,35 @@ export async function ingestTrainView(
   }
 
   return summary;
+}
+
+export interface PruneSummary {
+  trips: number;
+  observations: number;
+}
+
+/** Deletes trips (and their observations) more than `retentionDays` old,
+ * keeping only the most recent `retentionDays` of service dates. Run once a
+ * day, not per-poll, since it's date-bucketed and doesn't need finer
+ * granularity than that. */
+export async function pruneOldData(
+  db: D1Database,
+  currentServiceDate: string,
+  retentionDays: number
+): Promise<PruneSummary> {
+  const cutoff = shiftServiceDate(currentServiceDate, -(retentionDays - 1));
+
+  const deleteObservations = db
+    .prepare(
+      `DELETE FROM observations WHERE trip_id IN (SELECT id FROM trips WHERE service_date < ?)`
+    )
+    .bind(cutoff);
+  const deleteTrips = db.prepare(`DELETE FROM trips WHERE service_date < ?`).bind(cutoff);
+
+  const [obsResult, tripsResult] = await db.batch([deleteObservations, deleteTrips]);
+
+  return {
+    observations: obsResult.meta.changes ?? 0,
+    trips: tripsResult.meta.changes ?? 0,
+  };
 }
