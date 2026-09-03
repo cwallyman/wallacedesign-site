@@ -44,6 +44,16 @@ export function serviceDateFor(now: Date): string {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
+/** Shifts a YYYY-MM-DD service date by a number of calendar days (negative
+ * to go backward). Pure date-string arithmetic, so it doesn't care about
+ * timezones — the caller already resolved the date via serviceDateFor. */
+export function shiftServiceDate(dateStr: string, days: number): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
 export function splitConsist(consist: string): string[] {
   return consist
     .split(",")
