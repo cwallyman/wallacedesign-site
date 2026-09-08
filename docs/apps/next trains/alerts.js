@@ -18,6 +18,10 @@ const lastUpdated = document.querySelector("#last-updated");
 const statusMessage = document.querySelector("#status-message");
 const alertsContainer = document.querySelector("#alerts");
 const alertCardTemplate = document.querySelector("#alert-card-template");
+const lineFilter = document.querySelector("#line-filter");
+const routeSummary = document.querySelector("#route-summary");
+
+let latestAlerts = [];
 
 function setStatus(message) {
   statusMessage.textContent = message;
@@ -133,6 +137,39 @@ function renderAlertCard(alert) {
   return fragment;
 }
 
+function lineKey(alert) {
+  return alert.route_id || alert.route_name || "";
+}
+
+function populateLineFilterOptions(alerts) {
+  if (lineFilter.options.length > 1) {
+    return;
+  }
+
+  const sortedLines = [...alerts].sort((a, b) =>
+    (a.route_name || "").localeCompare(b.route_name || "")
+  );
+
+  sortedLines.forEach((alert) => {
+    const option = document.createElement("option");
+    option.value = lineKey(alert);
+    option.textContent = alert.route_name || "Unknown line";
+    lineFilter.appendChild(option);
+  });
+}
+
+function updateRouteSummary(alerts) {
+  if (!lineFilter.value) {
+    routeSummary.textContent = `All ${alerts.length} Regional Rail lines`;
+    return;
+  }
+
+  const selected = alerts.find((alert) => lineKey(alert) === lineFilter.value);
+  routeSummary.textContent = selected
+    ? selected.route_name
+    : `All ${alerts.length} Regional Rail lines`;
+}
+
 function renderAlerts(alerts) {
   alertsContainer.innerHTML = "";
 
@@ -141,9 +178,18 @@ function renderAlerts(alerts) {
     return;
   }
 
+  const filtered = lineFilter.value
+    ? alerts.filter((alert) => lineKey(alert) === lineFilter.value)
+    : alerts;
+
+  if (filtered.length === 0) {
+    setStatus("No alert data for the selected line.");
+    return;
+  }
+
   setStatus("");
 
-  const sorted = [...alerts].sort((a, b) => {
+  const sorted = [...filtered].sort((a, b) => {
     const aActive = hasActiveFlags(a);
     const bActive = hasActiveFlags(b);
 
@@ -206,6 +252,9 @@ async function refreshAlerts() {
 
   try {
     const alerts = await fetchAlerts();
+    latestAlerts = alerts;
+    populateLineFilterOptions(alerts);
+    updateRouteSummary(alerts);
     renderAlerts(alerts);
     lastUpdated.textContent = `Last updated ${formatTimestamp()}`;
   } catch (error) {
@@ -217,6 +266,11 @@ async function refreshAlerts() {
 
 refreshButton.addEventListener("click", () => {
   refreshAlerts();
+});
+
+lineFilter.addEventListener("change", () => {
+  updateRouteSummary(latestAlerts);
+  renderAlerts(latestAlerts);
 });
 
 refreshAlerts();

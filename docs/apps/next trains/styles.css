@@ -149,6 +149,11 @@ button:hover {
   color: white;
 }
 
+.line-filter-field {
+  max-width: 280px;
+  margin: 0 auto 18px;
+}
+
 .meta-row {
   display: flex;
   justify-content: space-between;
@@ -418,6 +423,10 @@ h2 {
   .meta-actions .nav-link,
   .meta-actions .secondary-button {
     flex: 1;
+  }
+
+  .line-filter-field {
+    max-width: none;
   }
 }
 
