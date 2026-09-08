@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SEPTA Regional Rail Alerts</title>
+    <link rel="stylesheet" href="./styles.css?v=2026-04-03-1" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="controls-card">
+        <p class="controls-title">SEPTA Regional Rail Alerts</p>
+
+        <div class="meta-row">
+          <p class="route-summary">All 13 Regional Rail lines</p>
+          <div class="meta-actions">
+            <a href="./index.html" class="nav-link">Back to Next Trains</a>
+            <button id="refresh-alerts" class="secondary-button" type="button">
+              Refresh
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="results-card">
+        <div class="results-header">
+          <h2>Current alerts</h2>
+          <p id="last-updated" class="last-updated">Loading live data...</p>
+        </div>
+
+        <div id="status-message" class="status-message" aria-live="polite"></div>
+        <div id="alerts" class="alerts-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <template id="alert-card-template">
+      <article class="alert-card">
+        <div class="alert-card-top">
+          <div>
+            <p class="alert-line-name"></p>
+            <p class="alert-line-description"></p>
+          </div>
+          <p class="alert-updated"></p>
+        </div>
+        <div class="alert-badges"></div>
+      </article>
+    </template>
+
+    <script src="./alerts.js?v=2026-04-03-1"></script>
+  </body>
+</html>

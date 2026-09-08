@@ -5,6 +5,9 @@ Small static web app that shows the next 3 SEPTA Regional Rail trains between:
 - Market East (`Jefferson Station (Market East)`)
 - Paoli
 
+It also has a "Regional Rail Alerts" page (`alerts.html`) that lists current
+SEPTA advisories, alerts, and elevator outages for all 13 Regional Rail lines.
+
 ## Run locally
 
 Start the local server:
@@ -61,3 +64,7 @@ wrangler deploy
 - On `wallacedesign.org`, the app uses the Cloudflare Worker proxy at `api.wallacedesign.org`.
 - It requests 3 results and supports swapping the route direction.
 - Auto-refresh runs every 30 seconds by default.
+- The alerts page (`alerts.html`) calls a `/api/alerts` endpoint (served by both
+  `server.py` locally and the Cloudflare Worker in production) that fetches
+  SEPTA's `Alerts` endpoint, filters it down to `mode: "Regional Rail"`
+  entries, and strips HTML out of the advisory/alert text before returning it.
