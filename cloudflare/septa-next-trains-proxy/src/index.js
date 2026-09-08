@@ -1,5 +1,18 @@
 const SEPTA_BASE_URL = "http://www3.septa.org/hackathon/NextToArrive/";
 const SEPTA_TRAIN_VIEW_URL = "http://www3.septa.org/hackathon/TrainView/";
+const SEPTA_ALERTS_URL = "http://www3.septa.org/hackathon/Alerts/index.php";
+
+function stripHtml(value) {
+  const text = (value || "").replace(/<[^>]+>/g, " ");
+  const decoded = text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'");
+  return decoded.replace(/\s+/g, " ").trim();
+}
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -41,6 +54,10 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/alerts") {
+      return handleAlerts();
+    }
 
     if (url.pathname !== "/api/next-trains") {
       return textResponse("Not found.", 404);
@@ -125,3 +142,63 @@ export default {
     return jsonResponse(enrichedTrains);
   },
 };
+
+async function handleAlerts() {
+  const alertsUrl = new URL(SEPTA_ALERTS_URL);
+  alertsUrl.searchParams.set("req2", "0");
+
+  let response;
+  try {
+    response = await fetch(alertsUrl.toString(), {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "wallacedesign-next-trains-proxy",
+      },
+      cf: {
+        cacheTtl: 0,
+        cacheEverything: false,
+      },
+    });
+  } catch (error) {
+    return textResponse(`Could not reach the SEPTA API: ${error.message}`, 502);
+  }
+
+  if (!response.ok) {
+    return textResponse(`SEPTA returned ${response.status}.`, 502);
+  }
+
+  let entries;
+  try {
+    entries = await response.json();
+  } catch (_error) {
+    return textResponse("SEPTA returned an unreadable response.", 502);
+  }
+
+  const railAlerts = entries
+    .filter((entry) => entry.mode === "Regional Rail")
+    .map((entry) => ({
+      route_id: entry.route_id || "",
+      route_name: entry.route_name || "",
+      description: entry.description || "",
+      last_updated: entry.last_updated || "",
+      isadvisory: entry.isadvisory || "N",
+      isalert: entry.isalert || "N",
+      isdetour: entry.isdetour || "N",
+      isdelays: entry.isdelays || "N",
+      isdiversion: entry.isdiversion || "N",
+      issuspended: entry.issuspended || "N",
+      ismodifiedservice: entry.ismodifiedservice || "N",
+      isSnow: entry.isSnow || "N",
+      iselevator: entry.iselevator || "N",
+      alert: stripHtml(entry.alert),
+      advisory: stripHtml(entry.advisory),
+      elevator: Array.isArray(entry.elevator)
+        ? entry.elevator.map((item) => ({
+            message: stripHtml(item.message),
+            updated: item.updated || "",
+          }))
+        : [],
+    }));
+
+  return jsonResponse(railAlerts);
+}
