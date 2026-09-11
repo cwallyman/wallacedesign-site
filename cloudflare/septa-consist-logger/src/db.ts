@@ -6,6 +6,13 @@ import { shiftServiceDate } from "./septa";
  * numbers for different runs later the same service day). */
 const GAP_MS = 3 * 60 * 60 * 1000;
 
+/** Minimum time between "nothing changed, just bump last_seen_at" writes for
+ * a trip. The cron polls every minute, but writing a no-op UPDATE for every
+ * active train on every single poll is what was driving the daily D1
+ * rows_written limit over — this only needs to be fresh enough for the
+ * GAP_MS reuse check above, not minute-accurate. */
+const TOUCH_THROTTLE_MS = 5 * 60 * 1000;
+
 export interface TripRow {
   id: number;
   service_date: string;
@@ -119,6 +126,10 @@ export async function ingestTrainView(
       existing.last_seen_at = nowIso;
       summary.consistChanges++;
     } else {
+      summary.touched++;
+      if (nowMs - Date.parse(existing.last_seen_at) < TOUCH_THROTTLE_MS) {
+        continue;
+      }
       batchStatements.push(
         db
           .prepare(
@@ -127,7 +138,6 @@ export async function ingestTrainView(
           .bind(nowIso, line, source, dest, existing.id)
       );
       existing.last_seen_at = nowIso;
-      summary.touched++;
     }
   }
 
