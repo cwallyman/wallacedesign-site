@@ -51,6 +51,13 @@ SEPTA TrainView API
   consist actually changes, so storage stays small even with per-minute
   polling.
 
+Unchanged trips update their `last_seen_at` heartbeat every 30 minutes;
+new trips and consist changes are still recorded on the one-minute polls.
+This reduces routine heartbeat updates by about 83% compared with five-minute
+updates. Last-seen timestamps can lag by up to 30 minutes, and the three-hour
+trip reuse check therefore has the same timing uncertainty. Actual D1 usage
+also includes new trips, observations, indexes, pruning, and other account activity.
+
 ## Features
 
 - **Live trip table** for any service date, showing train #, line, source,
