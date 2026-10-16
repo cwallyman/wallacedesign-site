@@ -3,97 +3,189 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>wallacedesign.org — Apps</title>
+  <title>Wallace Design — Apps</title>
+  <meta name="description" content="Apps and tools by Wallace Design: train times, stock scanning, and point cloud viewing.">
+  <meta name="theme-color" content="#0b1022">
+  <!-- Simple "W" favicon drawn inline, so no extra file is needed. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c3faa'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='34' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
   <style>
-    body {
-      font-family: system-ui, Segoe UI, Arial, sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      /* Full-screen background image for the landing page. */
-      background: url('/assets/w3dprintsbackground.png') center / cover no-repeat fixed;
-      color: #ffffff;
+    :root {
+      --panel: rgba(10, 14, 30, 0.55);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --icon-size: 4.5rem;
+      --icon-radius: 1rem; /* about 22% of the icon, like iOS app icons */
     }
 
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      line-height: 1.5;
+      color: var(--text);
+      background: #0b1022; /* shows while the image loads */
+    }
+
+    /* Full-screen background image. A fixed layer behind the page
+       (instead of background-attachment: fixed) also works on iPhone. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: url('/assets/w3dprintsbackground.png') center / cover no-repeat;
+    }
+
+    /* Frosted-glass panel, centered on the page. */
     main {
-      max-width: 42rem;
-      margin: 2rem;
-      padding: 1.5rem;
-      /* Semi-transparent panel keeps text readable over the image. */
-      background: rgba(1, 1, 1, 0.45);
-      border-radius: 1rem;
-      /* Soft blur helps the panel stand out from the background. */
-      backdrop-filter: blur(12px);
+      box-sizing: border-box;
+      width: min(42rem, calc(100% - 2rem));
+      margin: 2rem auto;
+      padding: 1.75rem 1.5rem;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 1.25rem;
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      backdrop-filter: blur(24px) saturate(160%);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 2.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .section-label {
+      margin: 1.5rem 0 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
     }
 
     .app-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 1.5rem 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+      justify-items: center;
+      gap: 1.25rem 1rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
     }
 
     .app-icon {
-      display: inline-flex;
+      display: flex;
       flex-direction: column;
       align-items: center;
-      width: 6.5rem;
-      color: #ffffff;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 6.5rem;
+      color: var(--text);
       text-decoration: none;
       text-align: center;
-      gap: 0.5rem;
+      border-radius: var(--icon-radius);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 120ms ease-out;
     }
 
+    /* Same size, shape, border and shadow for real icons and placeholders. */
     .app-icon img,
     .app-icon .placeholder {
-      width: 4.5rem;
-      height: 4.5rem;
-      border-radius: .25rem;
-      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-sizing: border-box;
+      width: var(--icon-size);
+      height: var(--icon-size);
+      border-radius: var(--icon-radius);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       object-fit: cover;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     }
 
+    /* Placeholder icons get a colored gradient so each app is distinct. */
     .app-icon .placeholder {
       display: grid;
       place-items: center;
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.0);
+      background: linear-gradient(145deg, var(--tint-a), var(--tint-b));
+      font-size: 1.05rem;
       font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
-    .app-icon span {
-      line-height: 1.2;
+    .app-name {
+      font-size: 0.9rem;
+      line-height: 1.25;
+    }
+
+    .external::after {
+      content: "\00a0↗"; /* non-breaking space keeps the arrow beside the name */
+      color: var(--text-secondary);
+    }
+
+    /* Feedback: lift on hover, press in on click/tap, clear keyboard focus. */
+    .app-icon:hover { transform: translateY(-2px); }
+    .app-icon:active { transform: scale(0.96); transition-duration: 60ms; }
+    .app-icon:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .app-icon,
+      .app-icon:hover,
+      .app-icon:active { transform: none; transition: none; }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+      main {
+        background: #0b1022;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+    }
+
+    @media (prefers-contrast: more) {
+      main { background: #000000; border-color: #ffffff; }
+      .section-label { color: #ffffff; }
     }
   </style>
 </head>
 <body>
+  <!-- To add an app: create docs/apps/<app-name>/index.html, then add a tile below. -->
   <main>
     <h1>Wallace Design</h1>
-    <p>Apps</p>
-    <div class="app-grid">
-      <a class="app-icon" href="/apps/next%20trains/">
-        <img src="/assets/icons/next-trains.png" alt="Next Trains icon">
-        <span>Next Trains</span>
-      </a>
-      <a class="app-icon" href="/apps/stock-scanner/">
-        <span class="placeholder">STK</span>
-        <span>Stock Scanner</span>
-      </a>
-      <a class="app-icon" href="/apps/PointCloudViewer/">
-        <span class="placeholder">PC</span>
-        <span>Point Cloud Viewer</span>
-      </a>
-      <a class="app-icon" href="/apps/pc-potree-converter/">
-        <span class="placeholder">CVT</span>
-        <span>PC Converter</span>
-      </a>
-      <a class="app-icon" href="https://septa-consist-logger.cjjw.workers.dev/">
-        <span class="placeholder">RRC</span>
-        <span>Consist Logger</span>
-      </a>
-    </div>
-    <hr>
-    <p>To add an app, create a folder under <code>docs/apps/&lt;app-name&gt;/</code> with an <code>index.html</code>.</p>
+    <h2 class="section-label">Apps</h2>
+    <ul class="app-grid">
+      <li>
+        <a class="app-icon" href="/apps/next%20trains/">
+          <img src="/assets/icons/next-trains.png" alt="">
+          <span class="app-name">Next Trains</span>
+        </a>
+      </li>
+      <li>
+        <a class="app-icon" href="/apps/stock-scanner/">
+          <span class="placeholder" aria-hidden="true" style="--tint-a:#1f9d6b; --tint-b:#0d5c3f">STK</span>
+          <span class="app-name">Stock Scanner</span>
+        </a>
+      </li>
+      <li>
+        <a class="app-icon" href="/apps/PointCloudViewer/">
+          <span class="placeholder" aria-hidden="true" style="--tint-a:#7b5cff; --tint-b:#3d2a9e">PC</span>
+          <span class="app-name">Point Cloud Viewer</span>
+        </a>
+      </li>
+      <li>
+        <a class="app-icon" href="/apps/pc-potree-converter/">
+          <span class="placeholder" aria-hidden="true" style="--tint-a:#ff8a3d; --tint-b:#b84a0e">CVT</span>
+          <span class="app-name">Point Cloud Converter</span>
+        </a>
+      </li>
+      <li>
+        <a class="app-icon" href="https://septa-consist-logger.cjjw.workers.dev/">
+          <span class="placeholder" aria-hidden="true" style="--tint-a:#e0455a; --tint-b:#8f1d2c">RRC</span>
+          <span class="app-name external">Consist Logger</span>
+        </a>
+      </li>
+    </ul>
   </main>
 </body>
 </html>
