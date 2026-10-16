@@ -14,6 +14,24 @@ const GAP_MS = 3 * 60 * 60 * 1000;
  * Last-seen timestamps can lag by up to thirty minutes. */
 const TOUCH_THROTTLE_MS = 30 * 60 * 1000;
 
+/** A train counts as delayed once TrainView reports it at least this many
+ * minutes late; the stop it was at when that first happened is recorded as
+ * where the delay started. */
+const DELAY_START_MIN = 1;
+
+/** TrainView uses 999 as a placeholder (e.g. for trains that haven't
+ * reported a real position yet), so anything at or above this is ignored. */
+const LATE_SENTINEL_MIN = 999;
+
+/** Minutes late from a TrainView entry, or null if missing/unusable. */
+function parseLate(late: string | number | undefined): number | null {
+  const n = Number(late);
+  if (late === undefined || late === "" || !Number.isFinite(n) || n >= LATE_SENTINEL_MIN) {
+    return null;
+  }
+  return Math.max(0, Math.round(n));
+}
+
 export interface TripRow {
   id: number;
   service_date: string;
@@ -24,12 +42,18 @@ export interface TripRow {
   last_consist: string;
   first_seen_at: string;
   last_seen_at: string;
+  /** Highest minutes-late reported for this trip (its total delay). */
+  max_late: number;
+  /** Stop the train was at when it first became DELAY_START_MIN+ late. */
+  delay_start_stop: string | null;
+  delay_start_at: string | null;
 }
 
 export interface PollSummary {
   seen: number;
   newTrips: number;
   consistChanges: number;
+  delayChanges: number;
   touched: number;
   skipped: number;
 }
@@ -40,7 +64,14 @@ export async function ingestTrainView(
   serviceDate: string,
   nowIso: string
 ): Promise<PollSummary> {
-  const summary: PollSummary = { seen: 0, newTrips: 0, consistChanges: 0, touched: 0, skipped: 0 };
+  const summary: PollSummary = {
+    seen: 0,
+    newTrips: 0,
+    consistChanges: 0,
+    delayChanges: 0,
+    touched: 0,
+    skipped: 0,
+  };
 
   const existingRows = await db
     .prepare(
@@ -72,18 +103,36 @@ export async function ingestTrainView(
     const line = entry.line || null;
     const source = entry.SOURCE || null;
     const dest = entry.dest || null;
+    const late = parseLate(entry.late);
+    const stop = entry.currentstop?.trim() || null;
 
     const existing = latestByTrainno.get(trainno);
     const gapExceeded =
       existing !== undefined && nowMs - Date.parse(existing.last_seen_at) > GAP_MS;
 
     if (!existing || gapExceeded) {
+      const maxLate = late ?? 0;
+      const delayStarted = maxLate >= DELAY_START_MIN;
+      const delayStartStop = delayStarted ? stop : null;
+      const delayStartAt = delayStarted ? nowIso : null;
       const inserted = await db
         .prepare(
-          `INSERT INTO trips (service_date, trainno, line, source, dest, last_consist, first_seen_at, last_seen_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO trips (service_date, trainno, line, source, dest, last_consist, first_seen_at, last_seen_at, max_late, delay_start_stop, delay_start_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
-        .bind(serviceDate, trainno, line, source, dest, consist, nowIso, nowIso)
+        .bind(
+          serviceDate,
+          trainno,
+          line,
+          source,
+          dest,
+          consist,
+          nowIso,
+          nowIso,
+          maxLate,
+          delayStartStop,
+          delayStartAt
+        )
         .run();
       const tripId = inserted.meta.last_row_id;
       batchStatements.push(
@@ -103,9 +152,31 @@ export async function ingestTrainView(
         last_consist: consist,
         first_seen_at: nowIso,
         last_seen_at: nowIso,
+        max_late: maxLate,
+        delay_start_stop: delayStartStop,
+        delay_start_at: delayStartAt,
       });
       summary.newTrips++;
       continue;
+    }
+
+    // Delay only needs a write when it reaches a new high (or starts for the
+    // first time), so a train hovering at the same lateness doesn't add
+    // per-minute writes on top of the throttled heartbeat.
+    if (late !== null && late > (existing.max_late ?? 0)) {
+      existing.max_late = late;
+      if (late >= DELAY_START_MIN && !existing.delay_start_at) {
+        existing.delay_start_stop = stop;
+        existing.delay_start_at = nowIso;
+      }
+      batchStatements.push(
+        db
+          .prepare(
+            `UPDATE trips SET max_late = ?, delay_start_stop = ?, delay_start_at = ? WHERE id = ?`
+          )
+          .bind(existing.max_late, existing.delay_start_stop, existing.delay_start_at, existing.id)
+      );
+      summary.delayChanges++;
     }
 
     if (consist !== "" && consist !== existing.last_consist) {

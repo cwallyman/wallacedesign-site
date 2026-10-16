@@ -10,6 +10,9 @@ export function buildTripsWorkbook(date: string, trips: TripRow[]): Uint8Array {
     Consist: t.last_consist ?? "",
     "First seen": t.first_seen_at,
     "Last seen": t.last_seen_at,
+    "Total delay (min)": t.max_late ?? 0,
+    "Delay started at": t.delay_start_stop ?? "",
+    "Delay started time": t.delay_start_at ?? "",
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -20,6 +23,9 @@ export function buildTripsWorkbook(date: string, trips: TripRow[]): Uint8Array {
     { wch: 18 },
     { wch: 32 },
     { wch: 22 },
+    { wch: 22 },
+    { wch: 16 },
+    { wch: 24 },
     { wch: 22 },
   ];
 

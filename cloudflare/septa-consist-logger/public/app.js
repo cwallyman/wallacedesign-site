@@ -18,6 +18,16 @@ function fmtTime(iso) {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function fmtDelay(trip) {
+  const min = trip.max_late ?? 0;
+  return min > 0 ? `${min} min` : '<span class="muted">on time</span>';
+}
+
+function fmtDelayStart(trip) {
+  if (!trip.delay_start_stop && !trip.delay_start_at) return "";
+  return `${trip.delay_start_stop ?? "unknown stop"} (${fmtTime(trip.delay_start_at)})`;
+}
+
 async function loadTrips() {
   const date = dateInput.value || todayEastern();
   exportLink.href = `/api/export?date=${encodeURIComponent(date)}`;
@@ -35,11 +45,13 @@ async function loadTrips() {
       <td>${trip.last_consist || '<span class="muted">unknown</span>'}</td>
       <td>${fmtTime(trip.first_seen_at)}</td>
       <td>${fmtTime(trip.last_seen_at)}</td>
+      <td>${fmtDelay(trip)}</td>
+      <td>${fmtDelayStart(trip)}</td>
     `;
     tripsBody.appendChild(tr);
   }
   if (data.trips.length === 0) {
-    tripsBody.innerHTML = `<tr><td colspan="7" class="muted">No trips logged for this date yet.</td></tr>`;
+    tripsBody.innerHTML = `<tr><td colspan="9" class="muted">No trips logged for this date yet.</td></tr>`;
   }
 }
 
