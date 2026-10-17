@@ -7,7 +7,9 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "db:migrate:local": "wrangler d1 execute septa-consists --local --file=./schema.sql",
-    "db:migrate:remote": "wrangler d1 execute septa-consists --remote --file=./schema.sql"
+    "db:migrate:remote": "wrangler d1 execute septa-consists --remote --file=./schema.sql",
+    "db:migrate:delays:local": "wrangler d1 execute septa-consists --local --file=./migrations/0002_add_delays.sql",
+    "db:migrate:delays:remote": "wrangler d1 execute septa-consists --remote --file=./migrations/0002_add_delays.sql"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260811.1",

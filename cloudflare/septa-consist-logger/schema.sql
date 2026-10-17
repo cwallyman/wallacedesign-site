@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS trips (
   dest TEXT,
   last_consist TEXT NOT NULL DEFAULT '',
   first_seen_at TEXT NOT NULL,
-  last_seen_at TEXT NOT NULL
+  last_seen_at TEXT NOT NULL,
+  max_late INTEGER NOT NULL DEFAULT 0,
+  delay_start_stop TEXT,
+  delay_start_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS observations (

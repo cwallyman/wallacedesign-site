@@ -153,7 +153,7 @@ export default {
           const entries = await fetchTrainView();
           const summary = await ingestTrainView(env.DB, entries, serviceDate, nowIso);
           console.log(
-            `[poll ${nowIso}] seen=${summary.seen} new=${summary.newTrips} changed=${summary.consistChanges} touched=${summary.touched} skipped=${summary.skipped}`
+            `[poll ${nowIso}] seen=${summary.seen} new=${summary.newTrips} changed=${summary.consistChanges} delays=${summary.delayChanges} touched=${summary.touched} skipped=${summary.skipped}`
           );
         } catch (err) {
           console.error("poll failed", err);

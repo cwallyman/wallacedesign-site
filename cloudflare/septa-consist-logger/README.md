@@ -47,6 +47,12 @@ SEPTA TrainView API
 - `trips` — one row per (service_date, trainno) run. If a train number is
   reused later the same day (gap > 3h since last seen), that starts a new
   trip row rather than merging into the old one.
+- `trips.max_late` / `delay_start_stop` / `delay_start_at` — the trip's
+  total delay (highest minutes-late TrainView reported) and the stop
+  (`currentstop`) and time when it first reported 1+ minutes late. These
+  are written only when the delay reaches a new high, so a train holding
+  steady at the same lateness adds no extra writes. TrainView's `999`
+  placeholder is ignored.
 - `observations` — append-only; a new row is only written when a trip's
   consist actually changes, so storage stays small even with per-minute
   polling.
@@ -61,7 +67,8 @@ also includes new trips, observations, indexes, pruning, and other account activ
 ## Features
 
 - **Live trip table** for any service date, showing train #, line, source,
-  destination, current consist, and first/last seen times.
+  destination, current consist, first/last seen times, total delay, and
+  the station where the delay started.
 - **Search by car number** — every trip a given railcar has appeared in,
   across all logged days still in D1 (see Daily pruning above — currently
   the last `RETENTION_DAYS` days).
@@ -101,6 +108,14 @@ Copy the `database_id` from the create command's output into
 ```bash
 npm run db:migrate:local   # for `wrangler dev`
 npm run db:migrate:remote  # for the deployed Worker
+```
+
+Existing databases created before delay tracking also need the one-time
+column migration (run it **before** deploying the delay-tracking Worker):
+
+```bash
+npm run db:migrate:delays:local
+npm run db:migrate:delays:remote
 ```
 
 ## Dev / deploy

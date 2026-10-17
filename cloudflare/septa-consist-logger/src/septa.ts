@@ -9,7 +9,7 @@ export interface TrainViewEntry {
   line: string;
   consist: string;
   heading: string;
-  late: string;
+  late: string | number;
   SOURCE: string;
   TRACK: string;
   TRACK_CHANGE: string;
