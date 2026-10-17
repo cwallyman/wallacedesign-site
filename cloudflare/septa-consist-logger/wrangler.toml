@@ -7,7 +7,7 @@ directory = "./public"
 binding = "ASSETS"
 
 [vars]
-NOTIFY_EMAIL = "cjjw@icloud.com"
+NOTIFY_EMAIL = "cjjw@icloud.com,cwallace@septa.org"
 
 [[d1_databases]]
 binding = "DB"
