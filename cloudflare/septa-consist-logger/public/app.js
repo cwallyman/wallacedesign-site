@@ -9,6 +9,11 @@ const exportLink = document.getElementById("export-link");
 
 const REFRESH_MS = 60_000;
 
+// Default: newest first-seen at the top, earliest at the bottom.
+let sortKey = "first_seen_at";
+let sortDir = "desc";
+let currentTrips = [];
+
 function todayEastern() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 }
@@ -34,23 +39,44 @@ async function loadTrips() {
   exportLink.download = `septa-consists-${date}.xlsx`;
   const res = await fetch(`/api/trips?date=${encodeURIComponent(date)}`);
   const data = await res.json();
+  currentTrips = data.trips;
+  renderTrips();
+}
+
+function compareTrips(a, b) {
+  const av = a[sortKey];
+  const bv = b[sortKey];
+  // Blank values always sort last, whichever direction.
+  const aBlank = av == null || av === "";
+  const bBlank = bv == null || bv === "";
+  if (aBlank || bBlank) return aBlank === bBlank ? 0 : aBlank ? 1 : -1;
+  const cmp = typeof av === "number" && typeof bv === "number"
+    ? av - bv
+    : String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: "base" });
+  return sortDir === "asc" ? cmp : -cmp;
+}
+
+function renderTrips() {
+  for (const th of document.querySelectorAll("#trips-table th[data-key]")) {
+    th.setAttribute("aria-sort", th.dataset.key === sortKey ? (sortDir === "asc" ? "ascending" : "descending") : "none");
+  }
   tripsBody.innerHTML = "";
-  for (const trip of data.trips) {
+  for (const trip of [...currentTrips].sort(compareTrips)) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${trip.trainno}</td>
+      <td class="nowrap">${trip.trainno}</td>
       <td>${trip.line ?? ""}</td>
       <td>${trip.source ?? ""}</td>
       <td>${trip.dest ?? ""}</td>
       <td>${trip.last_consist || '<span class="muted">unknown</span>'}</td>
-      <td>${fmtTime(trip.first_seen_at)}</td>
-      <td>${fmtTime(trip.last_seen_at)}</td>
-      <td>${fmtDelay(trip)}</td>
+      <td class="nowrap">${fmtTime(trip.first_seen_at)}</td>
+      <td class="nowrap">${fmtTime(trip.last_seen_at)}</td>
+      <td class="nowrap">${fmtDelay(trip)}</td>
       <td>${fmtDelayStart(trip)}</td>
     `;
     tripsBody.appendChild(tr);
   }
-  if (data.trips.length === 0) {
+  if (currentTrips.length === 0) {
     tripsBody.innerHTML = `<tr><td colspan="9" class="muted">No trips logged for this date yet.</td></tr>`;
   }
 }
@@ -100,6 +126,17 @@ async function refreshAll() {
 }
 
 dateInput.value = todayEastern();
+for (const th of document.querySelectorAll("#trips-table th[data-key]")) {
+  th.querySelector("button").addEventListener("click", () => {
+    if (sortKey === th.dataset.key) {
+      sortDir = sortDir === "asc" ? "desc" : "asc";
+    } else {
+      sortKey = th.dataset.key;
+      sortDir = "asc";
+    }
+    renderTrips();
+  });
+}
 dateInput.addEventListener("change", refreshAll);
 document.getElementById("car-search").addEventListener("click", searchCar);
 document.getElementById("train-search").addEventListener("click", searchTrain);
