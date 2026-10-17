@@ -91,8 +91,9 @@ also includes new trips, observations, indexes, pruning, and other account activ
 
 | Name | Type | Purpose |
 | --- | --- | --- |
-| `NOTIFY_EMAIL` | plain var (`wrangler.toml`) | Recipient for the daily export email |
-| `RESEND_API_KEY` | secret (`wrangler secret put`) | [Resend](https://resend.com) API key used to send that email. Sent from Resend's sandbox sender (`onboarding@resend.dev`), which only allows sending to the account's own signup email — so `NOTIFY_EMAIL` must match the email the Resend account was created with, case included. |
+| `NOTIFY_EMAIL` | plain var (`wrangler.toml`) | Recipient(s) for the daily export email, comma-separated. Each gets its own send, so one rejected address doesn't block the rest. |
+| `NOTIFY_FROM` | plain var (`wrangler.toml`), optional | Sender address, e.g. `SEPTA Consist Logger <logger@wallacedesign.org>`. Must be on a domain verified in Resend. Defaults to the sandbox sender below. |
+| `RESEND_API_KEY` | secret (`wrangler secret put`) | [Resend](https://resend.com) API key used to send that email. Without `NOTIFY_FROM`, mail is sent from Resend's sandbox sender (`onboarding@resend.dev`), which only delivers to the account's own signup email — any other recipient is rejected until a domain is verified and `NOTIFY_FROM` is set. |
 
 ## Local setup
 

@@ -14,6 +14,7 @@ export interface Env {
   ASSETS: Fetcher;
   RESEND_API_KEY?: string;
   NOTIFY_EMAIL?: string;
+  NOTIFY_FROM?: string;
 }
 
 /** True once a minute a day, at 23:59 America/New_York — computed from local
@@ -44,7 +45,7 @@ async function sendTodaysExport(env: Env, date: string): Promise<void> {
   const trips = results ?? [];
   const bytes = buildTripsWorkbook(date, trips);
   await sendDailyExportEmail(
-    { RESEND_API_KEY: env.RESEND_API_KEY, NOTIFY_EMAIL: env.NOTIFY_EMAIL },
+    { RESEND_API_KEY: env.RESEND_API_KEY, NOTIFY_EMAIL: env.NOTIFY_EMAIL, NOTIFY_FROM: env.NOTIFY_FROM },
     date,
     bytes,
     trips.length
