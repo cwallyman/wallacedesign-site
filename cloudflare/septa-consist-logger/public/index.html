@@ -20,22 +20,24 @@
 <main>
   <section>
     <h2>Today's trips</h2>
-    <table id="trips-table">
-      <thead>
-        <tr>
-          <th>Train #</th>
-          <th>Line</th>
-          <th>Source</th>
-          <th>Dest</th>
-          <th>Consist</th>
-          <th>First seen</th>
-          <th>Last seen</th>
-          <th>Total delay</th>
-          <th>Delay started at</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="table-wrap">
+      <table id="trips-table">
+        <thead>
+          <tr>
+            <th data-key="trainno" class="nowrap"><button type="button">Train #</button></th>
+            <th data-key="line"><button type="button">Line</button></th>
+            <th data-key="source"><button type="button">Source</button></th>
+            <th data-key="dest"><button type="button">Dest</button></th>
+            <th data-key="last_consist"><button type="button">Consist</button></th>
+            <th data-key="first_seen_at" class="nowrap"><button type="button">First seen</button></th>
+            <th data-key="last_seen_at" class="nowrap"><button type="button">Last seen</button></th>
+            <th data-key="max_late" class="nowrap"><button type="button">Total delay</button></th>
+            <th data-key="delay_start_at"><button type="button">Delay started at</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
 
   <section class="search">
