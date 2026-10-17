@@ -91,7 +91,7 @@ also includes new trips, observations, indexes, pruning, and other account activ
 
 | Name | Type | Purpose |
 | --- | --- | --- |
-| `NOTIFY_EMAIL` | plain var (`wrangler.toml`) | Recipient(s) for the daily export email, comma-separated. Each gets its own send, so one rejected address doesn't block the rest. |
+| `NOTIFY_EMAIL` | plain var (`wrangler.toml`) | Recipients for the daily export email, comma-separated. Both cjjw@icloud.com and cwallace@septa.org are configured and included in one Resend request. |
 | `NOTIFY_FROM` | plain var (`wrangler.toml`), optional | Sender address, e.g. `SEPTA Consist Logger <logger@wallacedesign.org>`. Must be on a domain verified in Resend. Defaults to the sandbox sender below. |
 | `RESEND_API_KEY` | secret (`wrangler secret put`) | [Resend](https://resend.com) API key used to send that email. Without `NOTIFY_FROM`, mail is sent from Resend's sandbox sender (`onboarding@resend.dev`), which only delivers to the account's own signup email — any other recipient is rejected until a domain is verified and `NOTIFY_FROM` is set. |
 

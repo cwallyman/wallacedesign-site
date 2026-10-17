@@ -27,37 +27,28 @@ export async function sendDailyExportEmail(
   const content = toBase64(xlsxBytes);
   const recipients = env.NOTIFY_EMAIL.split(",").map((r) => r.trim()).filter(Boolean);
 
-  // One send per recipient, so a rejected address (e.g. the sandbox sender
-  // refusing a non-owner address) doesn't stop delivery to the others.
-  const failures: string[] = [];
-  for (const to of recipients) {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: env.NOTIFY_FROM || DEFAULT_FROM,
-        to: [to],
-        subject: `SEPTA consists — ${date} (${tripCount} trips)`,
-        text: `Attached: every train logged on ${date}, with car consists where observed.`,
-        attachments: [
-          {
-            filename: `septa-consists-${date}.xlsx`,
-            content,
-          },
-        ],
-      }),
-    });
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: env.NOTIFY_FROM || DEFAULT_FROM,
+      to: recipients,
+      subject: `SEPTA consists — ${date} (${tripCount} trips)`,
+      text: `Attached: every train logged on ${date}, with car consists where observed.`,
+      attachments: [
+        {
+          filename: `septa-consists-${date}.xlsx`,
+          content,
+        },
+      ],
+    }),
+  });
 
-    if (!response.ok) {
-      const body = await response.text();
-      failures.push(`${to}: ${response.status} ${body}`);
-    }
-  }
-
-  if (failures.length > 0) {
-    throw new Error(`Resend send failed for ${failures.length}/${recipients.length}: ${failures.join("; ")}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Resend send failed: ${response.status} ${body}`);
   }
 }
