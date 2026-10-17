@@ -8,6 +8,7 @@ binding = "ASSETS"
 
 [vars]
 NOTIFY_EMAIL = "cjjw@icloud.com,cwallace@septa.org"
+NOTIFY_FROM = "SEPTA Consist Logger <logger@wallacedesign.org>"
 
 [[d1_databases]]
 binding = "DB"
