@@ -9,10 +9,10 @@ import { sendDailyExportEmail } from "./email";
  * driving the daily D1 rows_read limit over). */
 const RETENTION_DAYS = 365;
 
-/** Car lookups only search this many recent service dates. The search can't
- * use an index on the consist text, and the UI re-runs it every minute, so
- * bounding it by date keeps D1 rows_read flat as a year of history builds up. */
-const CAR_SEARCH_DAYS = 30;
+/** Car lookups search all retained history. They can't use an index on the
+ * consist text, so each one reads up to a year of rows — fine because the UI
+ * only runs them on demand, not on its 60s refresh. */
+const CAR_SEARCH_DAYS = RETENTION_DAYS;
 
 export interface Env {
   DB: D1Database;
