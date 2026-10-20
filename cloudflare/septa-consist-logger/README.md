@@ -88,6 +88,11 @@ also includes new trips, observations, indexes, pruning, and other account activ
 - `GET /api/cars/:carno` — every trip a given car number has appeared in
 - `GET /api/export?date=YYYY-MM-DD` — that day's trips as a downloadable
   `.xlsx`
+- `GET /feed.xml` — RSS feed of the most recent finished service day (it
+  switches at 23:59 ET, when the email goes out): one item per trip, with the
+  same fields as the `.xlsx` as JSON in each item's description. Meant for a
+  Power Automate flow ("When a feed item is published" → Parse JSON → create
+  a SharePoint list item), which avoids email filtering entirely.
 
 ## Environment
 
