@@ -1,6 +1,7 @@
 import { fetchTrainView, serviceDateFor, shiftServiceDate } from "./septa";
 import { ingestTrainView, pruneOldData, type TripRow } from "./db";
 import { buildTripsWorkbook } from "./export";
+import { buildDailyFeed, publishedFeedDate } from "./feed";
 import { sendDailyExportEmail } from "./email";
 
 /** How many days of trips/observations to keep. Data older than this is
@@ -130,9 +131,29 @@ async function handleCar(env: Env, carno: string): Promise<Response> {
   return json({ carno, sightings: results ?? [] });
 }
 
+async function handleFeed(env: Env, url: URL): Promise<Response> {
+  const now = new Date();
+  const date = publishedFeedDate(now, serviceDateFor(now));
+  const { results } = await env.DB.prepare(
+    `SELECT * FROM trips WHERE service_date = ? ORDER BY trainno`
+  )
+    .bind(date)
+    .all<TripRow>();
+  return new Response(buildDailyFeed(url.origin, date, results ?? []), {
+    headers: {
+      "Content-Type": "application/rss+xml; charset=utf-8",
+      "Cache-Control": "public, max-age=300",
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === "/feed.xml") {
+      return handleFeed(env, url);
+    }
 
     if (url.pathname === "/api/trips") {
       return handleTrips(env, url);

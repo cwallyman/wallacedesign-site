@@ -16,8 +16,10 @@ const HEADERS = [
   "Delay started time",
 ];
 
-export function buildTripsWorkbook(date: string, trips: TripRow[]): Uint8Array {
-  const rows = trips.map((t) => ({
+/** One row per trip, keyed by the spreadsheet's column headers. Shared by the
+ * .xlsx export and /feed.xml so both always carry the same fields. */
+export function tripRows(trips: TripRow[]) {
+  return trips.map((t) => ({
     "Train #": t.trainno,
     Line: t.line ?? "",
     Source: t.source ?? "",
@@ -29,6 +31,10 @@ export function buildTripsWorkbook(date: string, trips: TripRow[]): Uint8Array {
     "Delay started at": t.delay_start_stop ?? "",
     "Delay started time": t.delay_start_at ?? "",
   }));
+}
+
+export function buildTripsWorkbook(date: string, trips: TripRow[]): Uint8Array {
+  const rows = tripRows(trips);
 
   // Explicit header list so an empty day still gets a header row for the table.
   const worksheet = XLSX.utils.json_to_sheet(rows, { header: HEADERS });
@@ -56,7 +62,7 @@ export function buildTripsWorkbook(date: string, trips: TripRow[]): Uint8Array {
   return addExcelTable(new Uint8Array(output as ArrayBuffer), trips.length);
 }
 
-function escapeXml(s: string): string {
+export function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
