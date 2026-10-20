@@ -75,7 +75,9 @@ also includes new trips, observations, indexes, pruning, and other account activ
 - **Search by train number** — a single trip's full consist-change history
   for the day.
 - **`.xlsx` export** — `GET /api/export?date=YYYY-MM-DD` (also a button in
-  the UI) downloads that day's trip table as a real Excel file.
+  the UI) downloads that day's trip table as a real Excel file. The data is
+  an Excel table named `consists` (so Power Automate's "List rows present in
+  a table" can read it).
 - **Daily email** — the same export, sent automatically every night.
 
 ## API
