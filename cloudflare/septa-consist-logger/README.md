@@ -26,10 +26,11 @@ This is a single Cloudflare Worker with three moving parts:
    The 23:59 check is done from wall-clock local time (not a fixed UTC cron
    offset), so it stays correct across DST changes automatically.
 4. **Daily pruning** — right after the export email, trips/observations
-   older than `RETENTION_DAYS` (2, in `src/index.ts`) are deleted from D1.
-   The daily email is the durable record; D1 only needs to hold enough
-   history to serve the live web UI. This also keeps D1's `rows_read`
-   usage bounded instead of growing without limit as history piles up.
+   older than `RETENTION_DAYS` (365, in `src/index.ts`) are deleted from D1,
+   so the web UI and `.xlsx` download cover the past year (~40 MB of D1).
+   Per-day queries use `idx_trips_service_date`. Car searches scan the whole
+   retained year (no index can help a match inside the consist text), so
+   the UI runs them only on demand, never on its 60s refresh.
 
 ```
 SEPTA TrainView API
@@ -70,12 +71,13 @@ also includes new trips, observations, indexes, pruning, and other account activ
   destination, current consist, first/last seen times, total delay, and
   the station where the delay started.
 - **Search by car number** — every trip a given railcar has appeared in,
-  across all logged days still in D1 (see Daily pruning above — currently
-  the last `RETENTION_DAYS` days).
+  over the past year (`RETENTION_DAYS`).
 - **Search by train number** — a single trip's full consist-change history
   for the day.
 - **`.xlsx` export** — `GET /api/export?date=YYYY-MM-DD` (also a button in
-  the UI) downloads that day's trip table as a real Excel file.
+  the UI) downloads that day's trip table as a real Excel file. The data is
+  an Excel table named `consists` (so Power Automate's "List rows present in
+  a table" can read it).
 - **Daily email** — the same export, sent automatically every night.
 
 ## API

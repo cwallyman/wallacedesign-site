@@ -118,7 +118,7 @@ async function searchTrain() {
 
 async function refreshAll() {
   await loadTrips();
-  if (carInput.value.trim()) await searchCar();
+  // Car lookup runs only when asked (button/Enter), not on every refresh.
   if (trainInput.value.trim()) await searchTrain();
   if (lastUpdated) {
     lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
