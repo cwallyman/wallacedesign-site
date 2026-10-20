@@ -1,4 +1,4 @@
-import { fetchTrainView, serviceDateFor } from "./septa";
+import { fetchTrainView, serviceDateFor, shiftServiceDate } from "./septa";
 import { ingestTrainView, pruneOldData, type TripRow } from "./db";
 import { buildTripsWorkbook } from "./export";
 import { sendDailyExportEmail } from "./email";
@@ -7,7 +7,12 @@ import { sendDailyExportEmail } from "./email";
  * deleted once a day — the nightly export email is the durable record, so
  * there's no need to keep it in D1 (and keeping it unbounded is what was
  * driving the daily D1 rows_read limit over). */
-const RETENTION_DAYS = 2;
+const RETENTION_DAYS = 365;
+
+/** Car lookups only search this many recent service dates. The search can't
+ * use an index on the consist text, and the UI re-runs it every minute, so
+ * bounding it by date keeps D1 rows_read flat as a year of history builds up. */
+const CAR_SEARCH_DAYS = 30;
 
 export interface Env {
   DB: D1Database;
@@ -110,14 +115,17 @@ async function handleExport(env: Env, url: URL): Promise<Response> {
 
 async function handleCar(env: Env, carno: string): Promise<Response> {
   const { results } = await env.DB.prepare(
+    // CROSS JOIN pins trips as the outer loop so SQLite range-scans
+    // idx_trips_service_date instead of scanning every observation.
     `SELECT t.service_date, t.trainno, t.line, t.source, t.dest, o.consist, o.observed_at
-     FROM observations o
-     JOIN trips t ON t.id = o.trip_id
-     WHERE (',' || o.consist || ',') LIKE ('%,' || ? || ',%')
+     FROM trips t
+     CROSS JOIN observations o ON o.trip_id = t.id
+     WHERE t.service_date >= ?
+       AND (',' || o.consist || ',') LIKE ('%,' || ? || ',%')
      ORDER BY o.observed_at DESC
      LIMIT 200`
   )
-    .bind(carno)
+    .bind(shiftServiceDate(serviceDateFor(new Date()), -(CAR_SEARCH_DAYS - 1)), carno)
     .all();
   return json({ carno, sightings: results ?? [] });
 }
