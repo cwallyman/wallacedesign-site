@@ -4,98 +4,319 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Wallace Design — Apps</title>
-  <meta name="description" content="Apps and tools by Wallace Design: train times, stock scanning, and point cloud viewing.">
-  <meta name="theme-color" content="#0b1022">
+  <meta name="description" content="Apps and tools by Wallace Design: SEPTA train times, stock scanning, and point cloud viewing.">
+  <meta name="theme-color" content="#0a0f1f">
   <!-- Simple "W" favicon drawn inline, so no extra file is needed. -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c3faa'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='34' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
+    /* Layout: two columns on wide screens (sticky intro + nav on the left,
+       scrolling sections on the right), one column on phones. */
     :root {
-      --panel: rgba(10, 14, 30, 0.55);
-      --panel-border: rgba(255, 255, 255, 0.12);
-      --text: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.7);
-      --icon-size: 4.5rem;
-      --icon-radius: 1rem; /* about 22% of the icon, like iOS app icons */
+      color-scheme: dark;
+      --bg: #0a0f1f;
+      --panel: rgba(14, 21, 44, 0.72);
+      --line: rgba(150, 170, 230, 0.16);
+      --text: #eef1fb;
+      --text-secondary: #9aa6c6;
+      --text-faint: #66729a;
+      --accent: #7d97ff;      /* brand blue, lightened to read on dark */
+      --accent-soft: rgba(125, 151, 255, 0.14);
+      --signal: #ffb547;      /* live / in-progress status */
+      --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+      --icon-size: 3.5rem;
+      --icon-radius: 0.8rem;
     }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
       margin: 0;
       min-height: 100vh;
-      line-height: 1.5;
+      font: 400 1rem/1.6 var(--font-sans);
       color: var(--text);
-      background: #0b1022; /* shows while the image loads */
+      background: var(--bg);
     }
 
-    /* Full-screen background image. A fixed layer behind the page
-       (instead of background-attachment: fixed) also works on iPhone. */
+    /* Background: the existing artwork, dimmed, under a faint drawing-sheet grid. */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(rgba(10, 15, 31, 0.86), rgba(10, 15, 31, 0.94)),
+        url('/assets/w3dprintsbackground.png') center / cover no-repeat;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
       z-index: -1;
-      background: url('/assets/w3dprintsbackground.png') center / cover no-repeat;
+      pointer-events: none;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.35;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+      mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
     }
 
-    /* Frosted-glass panel, centered on the page. */
-    main {
-      box-sizing: border-box;
-      width: min(42rem, calc(100% - 2rem));
-      margin: 2rem auto;
-      padding: 1.75rem 1.5rem;
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 1.25rem;
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      backdrop-filter: blur(24px) saturate(160%);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-    }
+    a { color: inherit; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 6vw, 2.5rem);
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-    }
-
-    .section-label {
-      margin: 1.5rem 0 0;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .skip {
+      position: absolute;
+      left: -999px;
+      top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--accent);
+      color: #0a0f1f;
+      border-radius: 0.4rem;
+    }
+    .skip:focus { left: 0.5rem; }
+
+    .page {
+      width: min(76rem, 100%);
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* ---------- Left column ---------- */
+    .intro {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding: 3rem 0 2rem;
+    }
+
+    .avatar {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 5.5rem;
+      height: 5.5rem;
+      margin-bottom: 1.25rem;
+      border-radius: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: linear-gradient(145deg, #1c3faa, #0e1f5c);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 4px var(--accent-soft);
+      overflow: hidden;
+    }
+    .avatar::before {
+      content: attr(data-initial);
+      font-size: 2.2rem;
+      font-weight: 800;
+    }
+    .avatar img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .prompt { margin: 0; color: var(--text-faint); }
+    .prompt b { color: var(--accent); font-weight: 500; }
+
+    .brand {
+      margin: 0.35rem 0 0;
+      font-size: clamp(2.4rem, 6vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.035em;
+    }
+    .brand .cursor {
+      display: inline-block;
+      width: 0.42em;
+      height: 0.8em;
+      margin-left: 0.08em;
+      background: var(--signal);
+      vertical-align: -0.04em;
+      animation: blink 1.1s steps(1) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .tagline {
+      margin: 0.9rem 0 0;
+      font-size: 1.15rem;
+      font-weight: 500;
+    }
+    .lede {
+      margin: 0.75rem 0 0;
+      max-width: 24rem;
       color: var(--text-secondary);
     }
 
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
-      justify-items: center;
-      gap: 1.25rem 1rem;
-      margin: 1rem 0 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .app-icon {
+    /* Section nav: line grows and brightens for the section in view. */
+    .section-nav { display: none; }
+    .section-nav ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; }
+    .section-nav a {
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 0;
+      color: var(--text-faint);
+      text-decoration: none;
+      transition: color 150ms ease-out;
+    }
+    .section-nav a::before {
+      content: "";
+      width: 2rem;
+      height: 1px;
+      background: currentColor;
+      transition: width 150ms ease-out;
+    }
+    .section-nav a:hover,
+    .section-nav a[aria-current="true"] { color: var(--text); }
+    .section-nav a:hover::before,
+    .section-nav a[aria-current="true"]::before { width: 4rem; }
+
+    /* Spec sheet card, styled like a terminal window. */
+    .spec {
+      max-width: 24rem;
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+      background: var(--panel);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    .spec-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--text-faint);
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+    .spec-bar i {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: var(--text-faint);
+    }
+    .spec-bar i:nth-child(1) { background: #ff6b5a; }
+    .spec-bar i:nth-child(2) { background: var(--signal); }
+    .spec-bar i:nth-child(3) { background: var(--accent); }
+    .spec-bar span { margin-left: 0.4rem; }
+    .spec dl { margin: 0; padding: 0.35rem 0.9rem 0.6rem; }
+    .spec dl div {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px dashed var(--line);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+    .spec dl div:last-child { border-bottom: 0; }
+    .spec dt { color: var(--text-faint); }
+    .spec dd { margin: 0; text-align: right; }
+    .spec .live { color: var(--signal); }
+
+    .links { display: flex; gap: 1.25rem; margin: 0; padding: 0; list-style: none; }
+    .links a {
+      display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      width: 100%;
-      max-width: 6.5rem;
-      color: var(--text);
+      color: var(--text-secondary);
       text-decoration: none;
-      text-align: center;
-      border-radius: var(--icon-radius);
-      -webkit-tap-highlight-color: transparent;
-      transition: transform 120ms ease-out;
     }
+    .links a:hover { color: var(--text); }
+    .links svg { width: 1.25rem; height: 1.25rem; fill: currentColor; }
 
-    /* Same size, shape, border and shadow for real icons and placeholders. */
-    .app-icon img,
-    .app-icon .placeholder {
-      box-sizing: border-box;
+    /* ---------- Right column ---------- */
+    .content { display: grid; gap: 4.5rem; padding: 1rem 0 4rem; min-width: 0; }
+    .content > * { min-width: 0; } /* keeps the ticker from widening the page */
+
+    /* Drawing-sheet title block. */
+    .sheet {
+      display: grid;
+      grid-template-columns: repeat(3, auto) 1fr;
+      border: 1px solid var(--line);
+      border-radius: 0.6rem;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .sheet div { padding: 0.6rem 0.9rem; border-right: 1px solid var(--line); }
+    .sheet div:last-child { border-right: 0; }
+    .sheet dt { color: var(--text-faint); font-size: 0.65rem; }
+    .sheet dd { margin: 0.15rem 0 0; font-family: var(--font-mono); font-size: 0.8rem; }
+
+    /* Scrolling list of SEPTA Regional Rail lines. */
+    .ticker {
+      margin-top: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 0.6rem;
+      overflow: hidden;
+      color: var(--text-secondary);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    }
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: ticker 60s linear infinite;
+    }
+    .ticker ul { display: flex; margin: 0; padding: 0.7rem 0; list-style: none; }
+    .ticker li { padding: 0 1.1rem; white-space: nowrap; }
+    .ticker li::after { content: "✦"; margin-left: 2.2rem; color: var(--accent); }
+    @keyframes ticker { to { transform: translateX(-50%); } }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .section-head h2 span { color: var(--text-faint); }
+    .section-head p { margin: 0; color: var(--text-faint); }
+
+    /* Project rows: icon, title with arrow, description, tags. */
+    .projects { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+    .project {
+      position: relative;
+      display: grid;
+      grid-template-columns: var(--icon-size) minmax(0, 1fr);
+      gap: 1.25rem;
+      padding: 1.1rem;
+      border: 1px solid transparent;
+      border-radius: 0.75rem;
+      transition: background 150ms ease-out, border-color 150ms ease-out;
+    }
+    .project:hover,
+    .project:focus-within {
+      background: var(--panel);
+      border-color: var(--line);
+    }
+    .project-icon img,
+    .project-icon .placeholder {
+      display: grid;
+      place-items: center;
       width: var(--icon-size);
       height: var(--icon-size);
       border-radius: var(--icon-radius);
@@ -103,89 +324,287 @@
       object-fit: cover;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     }
-
-    /* Placeholder icons get a colored gradient so each app is distinct. */
-    .app-icon .placeholder {
-      display: grid;
-      place-items: center;
+    .project-icon .placeholder {
       background: linear-gradient(145deg, var(--tint-a), var(--tint-b));
-      font-size: 1.05rem;
       font-weight: 700;
+      font-size: 0.85rem;
       letter-spacing: 0.02em;
     }
-
-    .app-name {
-      font-size: 0.9rem;
-      line-height: 1.25;
+    .project-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.25rem 1rem;
+      color: var(--text-faint);
     }
-
-    .external::after {
-      content: "\00a0↗"; /* non-breaking space keeps the arrow beside the name */
+    .project-meta .kind { color: var(--accent); }
+    .project-meta .kind.wip { color: var(--signal); }
+    .project h3 { margin: 0.3rem 0 0; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+    .project h3 a { text-decoration: none; }
+    /* Whole row is clickable; the link's ::after covers the card. */
+    .project h3 a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+    .project h3 .arrow {
+      display: inline-block;
+      margin-left: 0.2rem;
       color: var(--text-secondary);
+      transition: transform 150ms ease-out;
+    }
+    .project:hover .arrow { transform: translate(2px, -2px); color: var(--accent); }
+    .project p { margin: 0.35rem 0 0; color: var(--text-secondary); max-width: 38rem; }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.8rem 0 0; padding: 0; list-style: none; }
+    .tags li {
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font: 500 0.72rem/1.5 var(--font-mono);
     }
 
-    /* Feedback: lift on hover, press in on click/tap, clear keyboard focus. */
-    .app-icon:hover { transform: translateY(-2px); }
-    .app-icon:active { transform: scale(0.96); transition-duration: 60ms; }
-    .app-icon:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
+    /* Revision history table. */
+    .revisions { width: 100%; border-collapse: collapse; }
+    .revisions th,
+    .revisions td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .revisions th { color: var(--text-faint); font-weight: 500; }
+    .revisions td:first-child { white-space: nowrap; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .revisions td:nth-child(2) { white-space: nowrap; }
+    .revisions .app { color: var(--accent); font-family: var(--font-mono); font-size: 0.75rem; }
+    .table-wrap { overflow-x: auto; }
+
+    .about p { margin: 0 0 1rem; max-width: 38rem; color: var(--text-secondary); }
+    .about strong { color: var(--text); font-weight: 500; }
+
+    footer { color: var(--text-faint); padding-top: 1.5rem; border-top: 1px solid var(--line); }
+
+    /* ---------- Wide screens: two columns, sticky left ---------- */
+    @media (min-width: 64rem) {
+      .page {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        gap: 4rem;
+        padding: 0 3rem;
+      }
+      .intro {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 5rem 0 3rem;
+        justify-content: space-between;
+      }
+      .section-nav { display: block; }
+      .content { padding: 5rem 0 5rem; }
+    }
+
+    @media (max-width: 30rem) {
+      .sheet { grid-template-columns: repeat(2, 1fr); }
+      .sheet div:nth-child(2) { border-right: 0; }
+      .sheet div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .project { padding: 1rem 0.5rem; gap: 1rem; }
+    }
 
     @media (prefers-reduced-motion: reduce) {
-      .app-icon,
-      .app-icon:hover,
-      .app-icon:active { transform: none; transition: none; }
+      html { scroll-behavior: auto; }
+      .brand .cursor, .ticker-track { animation: none; }
+      .project, .section-nav a, .section-nav a::before, .project h3 .arrow { transition: none; }
     }
 
     @media (prefers-reduced-transparency: reduce) {
-      main {
-        background: #0b1022;
+      .spec, .sheet, .project:hover, .project:focus-within {
+        background: #0e152c;
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
       }
     }
 
     @media (prefers-contrast: more) {
-      main { background: #000000; border-color: #ffffff; }
-      .section-label { color: #ffffff; }
+      :root { --text-secondary: #ffffff; --text-faint: #d0d6ea; --line: rgba(255, 255, 255, 0.6); }
+      body::before { background: #000000; }
     }
   </style>
 </head>
 <body>
-  <!-- To add an app: create docs/apps/<app-name>/index.html, then add a tile below. -->
-  <main>
-    <h1>Wallace Design</h1>
-    <h2 class="section-label">Apps</h2>
-    <ul class="app-grid">
-      <li>
-        <a class="app-icon" href="/apps/next%20trains/">
-          <img src="/assets/icons/next-trains.png" alt="">
-          <span class="app-name">Next Trains</span>
-        </a>
-      </li>
-      <li>
-        <a class="app-icon" href="/apps/stock-scanner/">
-          <span class="placeholder" aria-hidden="true" style="--tint-a:#1f9d6b; --tint-b:#0d5c3f">STK</span>
-          <span class="app-name">Stock Scanner</span>
-        </a>
-      </li>
-      <li>
-        <a class="app-icon" href="/apps/PointCloudViewer/">
-          <span class="placeholder" aria-hidden="true" style="--tint-a:#7b5cff; --tint-b:#3d2a9e">PC</span>
-          <span class="app-name">Point Cloud Viewer</span>
-        </a>
-      </li>
-      <li>
-        <a class="app-icon" href="/apps/pc-potree-converter/">
-          <span class="placeholder" aria-hidden="true" style="--tint-a:#ff8a3d; --tint-b:#b84a0e">CVT</span>
-          <span class="app-name">Point Cloud Converter</span>
-        </a>
-      </li>
-      <li>
-        <a class="app-icon" href="https://septa-consist-logger.cjjw.workers.dev/">
-          <span class="placeholder" aria-hidden="true" style="--tint-a:#e0455a; --tint-b:#8f1d2c">RRC</span>
-          <span class="app-name external">Consist Logger</span>
-        </a>
-      </li>
-    </ul>
-  </main>
+  <a class="skip" href="#apps">Skip to apps</a>
+
+  <div class="page">
+    <header class="intro">
+      <div>
+        <!-- Profile photo: docs/assets/profile.jpg. The "W" shows if it fails to load. -->
+        <div class="avatar" data-initial="W">
+          <img src="/assets/profile.jpg" alt="Watercolor portrait of the Wallace Design developer" width="88" height="88" onerror="this.remove()">
+        </div>
+        <p class="prompt mono">~/wallace <b>$</b> whoami</p>
+        <h1 class="brand">Wallace Design<span class="cursor" aria-hidden="true"></span></h1>
+        <p class="tagline">Tools for trains, scans and data.</p>
+        <p class="lede">Small, fast web apps built around SEPTA Regional Rail, 3D point clouds and market news. Free to use, no accounts.</p>
+      </div>
+
+      <nav class="section-nav" aria-label="Sections">
+        <ol>
+          <li><a class="mono" href="#apps">01 Apps</a></li>
+          <li><a class="mono" href="#shop">02 In the shop</a></li>
+          <li><a class="mono" href="#revisions">03 Revision history</a></li>
+          <li><a class="mono" href="#about">04 About</a></li>
+        </ol>
+      </nav>
+
+      <div class="spec" aria-label="Site summary">
+        <div class="spec-bar mono"><i></i><i></i><i></i><span>~/wallace — status.json</span></div>
+        <dl>
+          <div><dt>focus</dt><dd>rail · 3d scan · web · ios</dd></div>
+          <div><dt>stack</dt><dd>js · swift · cloudflare</dd></div>
+          <div><dt>apps_live</dt><dd>4</dd></div>
+          <div><dt>status</dt><dd class="live">building</dd></div>
+        </dl>
+      </div>
+
+      <ul class="links">
+        <li>
+          <a href="https://github.com/cwallyman" rel="noopener">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            <span class="mono">GitHub</span>
+          </a>
+        </li>
+      </ul>
+    </header>
+
+    <main class="content">
+      <div>
+        <dl class="sheet">
+          <div><dt class="mono">Sheet</dt><dd>1 of 1</dd></div>
+          <div><dt class="mono">Rev</dt><dd>2026.10</dd></div>
+          <div><dt class="mono">Apps</dt><dd>4 live</dd></div>
+          <div><dt class="mono">Domain</dt><dd>wallacedesign.org</dd></div>
+        </dl>
+        <div class="ticker mono" aria-hidden="true">
+          <div class="ticker-track">
+            <ul>
+              <li>Paoli/Thorndale</li><li>Manayunk/Norristown</li><li>West Trenton</li><li>Lansdale/Doylestown</li>
+              <li>Media/Wawa</li><li>Trenton</li><li>Warminster</li><li>Wilmington/Newark</li>
+              <li>Airport</li><li>Chestnut Hill East</li><li>Chestnut Hill West</li><li>Cynwyd</li><li>Fox Chase</li>
+            </ul>
+            <ul>
+              <li>Paoli/Thorndale</li><li>Manayunk/Norristown</li><li>West Trenton</li><li>Lansdale/Doylestown</li>
+              <li>Media/Wawa</li><li>Trenton</li><li>Warminster</li><li>Wilmington/Newark</li>
+              <li>Airport</li><li>Chestnut Hill East</li><li>Chestnut Hill West</li><li>Cynwyd</li><li>Fox Chase</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- To add an app: create docs/apps/<app-name>/index.html, then copy one <li class="project"> below. -->
+      <section id="apps" aria-labelledby="apps-title">
+        <div class="section-head">
+          <h2 id="apps-title"><span>01 —</span> Apps</h2>
+          <p class="mono">4 live · runs in your browser</p>
+        </div>
+        <ul class="projects">
+          <li class="project">
+            <div class="project-icon"><img src="/assets/icons/next-trains.png" alt=""></div>
+            <div>
+              <div class="project-meta mono"><span>WD-001</span><span class="kind">Live data</span></div>
+              <h3><a href="/apps/next%20trains/">Next Trains<span class="arrow" aria-hidden="true">↗</span></a></h3>
+              <p>The next three SEPTA Regional Rail trains between Jefferson and Paoli, with departure, arrival, status and track. Includes a page of current Regional Rail alerts.</p>
+              <ul class="tags"><li>SEPTA</li><li>Live API</li><li>Cloudflare Worker</li></ul>
+            </div>
+          </li>
+          <li class="project">
+            <div class="project-icon"><span class="placeholder" aria-hidden="true" style="--tint-a:#7b5cff; --tint-b:#3d2a9e">PC</span></div>
+            <div>
+              <div class="project-meta mono"><span>WD-003</span><span class="kind">3D</span></div>
+              <h3><a href="/apps/PointCloudViewer/">Point Cloud Viewer<span class="arrow" aria-hidden="true">↗</span></a></h3>
+              <p>Open LAS, LAZ and text point clouds right in the browser. Measure, filter by classification and inspect points. Files never leave your computer.</p>
+              <ul class="tags"><li>Potree</li><li>LAS · LAZ</li><li>WebGL</li></ul>
+            </div>
+          </li>
+          <li class="project">
+            <div class="project-icon"><span class="placeholder" aria-hidden="true" style="--tint-a:#ff8a3d; --tint-b:#b84a0e">CVT</span></div>
+            <div>
+              <div class="project-meta mono"><span>WD-004</span><span class="kind">3D</span></div>
+              <h3><a href="/apps/pc-potree-converter/">Point Cloud Converter<span class="arrow" aria-hidden="true">↗</span></a></h3>
+              <p>A Windows helper that turns LAS and LAZ scans into Potree point clouds with drag and drop, then opens them in the viewer.</p>
+              <ul class="tags"><li>Windows</li><li>PotreeConverter</li></ul>
+            </div>
+          </li>
+          <li class="project">
+            <div class="project-icon"><span class="placeholder" aria-hidden="true" style="--tint-a:#1f9d6b; --tint-b:#0d5c3f">STK</span></div>
+            <div>
+              <div class="project-meta mono"><span>WD-002</span><span class="kind">Markets</span></div>
+              <h3><a href="/apps/stock-scanner/">Stock Scanner<span class="arrow" aria-hidden="true">↗</span></a></h3>
+              <p>Scans the last 24 hours of news for a ticker and flags catalyst keywords like financing, grants and awards. Uses your own Alpha Vantage key.</p>
+              <ul class="tags"><li>Alpha Vantage</li><li>News</li></ul>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section id="shop" aria-labelledby="shop-title">
+        <div class="section-head">
+          <h2 id="shop-title"><span>02 —</span> In the shop</h2>
+          <p class="mono">In development · not released</p>
+        </div>
+        <ul class="projects">
+          <li class="project">
+            <div class="project-icon"><span class="placeholder" aria-hidden="true" style="--tint-a:#2fb7d6; --tint-b:#105a75">3D</span></div>
+            <div>
+              <div class="project-meta mono"><span>WD-006</span><span class="kind wip">iOS · In progress</span></div>
+              <h3>W3DScan</h3>
+              <p>A free LiDAR 3D scanner for iPhone. Scan objects and rooms, clean up the mesh, then export to USDZ, OBJ, STL or CAD-ready STEP.</p>
+              <ul class="tags"><li>SwiftUI</li><li>LiDAR</li><li>RoomPlan</li><li>STEP export</li></ul>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section id="revisions" aria-labelledby="revisions-title">
+        <div class="section-head">
+          <h2 id="revisions-title"><span>03 —</span> Revision history</h2>
+          <p class="mono">Latest first</p>
+        </div>
+        <div class="table-wrap">
+          <table class="revisions">
+            <thead>
+              <tr><th class="mono" scope="col">Date</th><th class="mono" scope="col">App</th><th class="mono" scope="col">Change</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2026-10-21</td><td class="app">Site</td><td>New two-column homepage with app descriptions and this history</td></tr>
+              <tr><td>2026-09-08</td><td class="app">Next Trains</td><td>Regional Rail alerts page</td></tr>
+              <tr><td>2026-08-25</td><td class="app">Site</td><td>Moved from w3dprints.net to wallacedesign.org</td></tr>
+              <tr><td>2026-07-20</td><td class="app">Point Cloud</td><td>Viewer and converter released, with drag and drop</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="about" class="about" aria-labelledby="about-title">
+        <div class="section-head">
+          <h2 id="about-title"><span>04 —</span> About</h2>
+        </div>
+        <p><strong>Wallace Design</strong> is a one-person workshop for useful software. Most of these apps started as something I needed myself: a faster way to check the next train home, a way to open a laser scan without installing anything.</p>
+        <p>Everything here is free. The web apps run as static pages with small Cloudflare Workers where live data is needed.</p>
+      </section>
+
+      <footer class="mono">© 2026 Wallace Design · wallacedesign.org</footer>
+    </main>
+  </div>
+
+  <script>
+    // Highlight the nav link for the section currently in view.
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.section-nav a'));
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var byId = {};
+      links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (a) { a.removeAttribute('aria-current'); });
+          byId[entry.target.id].setAttribute('aria-current', 'true');
+        });
+      }, { rootMargin: '-35% 0px -60% 0px' });
+      Object.keys(byId).forEach(function (id) {
+        var section = document.getElementById(id);
+        if (section) observer.observe(section);
+      });
+    })();
+  </script>
 </body>
 </html>
