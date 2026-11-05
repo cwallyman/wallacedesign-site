@@ -1,15 +1,15 @@
 :root {
   color-scheme: light;
-  --bg: #f6efe2;
-  --panel: rgba(255, 251, 245, 0.92);
-  --panel-strong: #fffaf2;
-  --text: #1d2733;
-  --muted: #5f6f7c;
-  --accent: #0b6e4f;
-  --accent-strong: #074b36;
-  --accent-soft: #d8efe4;
-  --border: rgba(29, 39, 51, 0.12);
-  --shadow: 0 20px 60px rgba(54, 42, 18, 0.12);
+  --bg: #eef3fa;
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-strong: #ffffff;
+  --text: #13233d;
+  --muted: #56677f;
+  --accent: #14427f;
+  --accent-strong: #0d2f5c;
+  --accent-soft: #dbe9f7;
+  --border: rgba(20, 66, 127, 0.14);
+  --shadow: 0 20px 60px rgba(13, 47, 92, 0.14);
 }
 
 * {
@@ -22,9 +22,9 @@ body {
   font-family: Georgia, "Times New Roman", serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(11, 110, 79, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(210, 126, 55, 0.16), transparent 24%),
-    linear-gradient(180deg, #f9f3e9 0%, #f1e4ce 100%);
+    radial-gradient(circle at top left, rgba(58, 143, 216, 0.22), transparent 30%),
+    radial-gradient(circle at top right, rgba(214, 47, 43, 0.12), transparent 24%),
+    linear-gradient(180deg, #f4f7fc 0%, #dfe8f4 100%);
 }
 
 .app-shell {
@@ -84,7 +84,7 @@ h2,
   background: var(--accent);
   border-color: var(--accent);
   color: white;
-  box-shadow: 0 10px 24px rgba(11, 110, 79, 0.18);
+  box-shadow: 0 10px 24px rgba(20, 66, 127, 0.22);
 }
 
 .trip-form {
@@ -227,7 +227,7 @@ h2 {
   padding: 18px;
   border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(248, 242, 232, 0.96)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(241, 246, 252, 0.96)),
     var(--panel-strong);
   border: 1px solid var(--border);
 }
@@ -286,7 +286,7 @@ h2 {
 }
 
 .detail-value.is-late {
-  color: #a33f24;
+  color: #c42a26;
 }
 
 .detail-value.is-on-time {
@@ -302,7 +302,7 @@ h2 {
   padding: 18px;
   border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(248, 242, 232, 0.96)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(241, 246, 252, 0.96)),
     var(--panel-strong);
   border: 1px solid var(--border);
 }
@@ -361,8 +361,8 @@ h2 {
 }
 
 .alert-badge.is-active {
-  background: #f6dccb;
-  color: #a33f24;
+  background: #fbe1e0;
+  color: #c42a26;
 }
 
 .alert-text {
@@ -473,7 +473,7 @@ h2 {
 }
 
 .connection-status.is-late {
-  color: #a33f24;
+  color: #c42a26;
 }
 
 .connection-status.is-on-time {
