@@ -436,3 +436,56 @@ h2 {
     padding: 12px;
   }
 }
+
+.connection {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  font-family: Arial, sans-serif;
+}
+
+.connection[hidden] {
+  display: none;
+}
+
+.connection p {
+  margin: 0;
+}
+
+.connection-station {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.connection-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  margin-top: 8px;
+}
+
+.connection-train {
+  font-weight: 700;
+}
+
+.connection-status.is-late {
+  color: #a33f24;
+}
+
+.connection-status.is-on-time {
+  color: var(--accent-strong);
+}
+
+.connection-time {
+  margin-top: 4px;
+}
+
+.connection-consist {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}

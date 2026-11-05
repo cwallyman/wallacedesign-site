@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SEPTA Next Trains</title>
-    <link rel="stylesheet" href="./styles.css?v=2026-04-03-1" />
+    <link rel="stylesheet" href="./styles.css?v=2026-11-05-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -20,6 +20,9 @@
           </button>
           <button class="line-button" type="button" data-line="westTrenton">
             West Trenton
+          </button>
+          <button class="line-button" type="button" data-line="trenton">
+            Trenton
           </button>
         </div>
 
@@ -102,9 +105,18 @@
             <p class="detail-value track-text"></p>
           </div>
         </div>
+        <div class="connection" hidden>
+          <p class="connection-station"></p>
+          <div class="connection-row">
+            <p class="connection-train"></p>
+            <p class="connection-status"></p>
+          </div>
+          <p class="connection-time"></p>
+          <p class="connection-consist"></p>
+        </div>
       </article>
     </template>
 
-    <script src="./app.js?v=2026-04-03-1"></script>
+    <script src="./app.js?v=2026-11-05-1"></script>
   </body>
 </html>

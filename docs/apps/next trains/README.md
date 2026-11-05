@@ -1,9 +1,19 @@
 # SEPTA Next Trains
 
-Small static web app that shows the next 3 SEPTA Regional Rail trains between:
+Small static web app that shows the next 3 SEPTA Regional Rail trains between
+any two stations on the Paoli/Thorndale, Manayunk/Norristown, West Trenton and
+Trenton lines (default: Jefferson to Paoli).
 
-- Market East (`Jefferson Station (Market East)`)
-- Paoli
+### Cross-line trips
+
+Origin and destination can be on different lines (e.g. Trenton to Paoli). The
+line buttons pick the defaults and which line's stations are listed first; the
+other lines' stations are listed below in their own groups. SEPTA's
+`NextToArrive` API plans the connection itself and returns `isdirect: "false"`
+with the second train (`term_train`, `term_depart_time`, `term_arrival_time`,
+`Connection`, `term_delay`). Cards then show the final arrival time plus a
+"Change at ..." section for the second train. Both proxies also add
+`term_consist` / `term_car_count` for that second train.
 
 It also has a "Regional Rail Alerts" page (`alerts.html`) that lists current
 SEPTA advisories, alerts, and elevator outages for all 13 Regional Rail lines.
