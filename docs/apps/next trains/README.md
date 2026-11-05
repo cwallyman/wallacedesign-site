@@ -4,6 +4,16 @@ Small static web app that shows the next 3 SEPTA Regional Rail trains between
 any two stations on the Paoli/Thorndale, Manayunk/Norristown, West Trenton and
 Trenton lines (default: Jefferson to Paoli).
 
+### Station search
+
+Each field (origin and destination) has a search box above its station
+dropdown. Typing filters that dropdown to matching stations and selects the
+best match: exact name first, then names starting with the text, then a word
+starting with it. Matching ignores case and punctuation ("st davids" finds
+St. Davids) and also checks SEPTA's API name ("market east" finds Jefferson).
+Enter in a search box shows trains. Clearing it, swapping, or switching lines
+brings back the full list. The dropdowns work as before.
+
 ### Cross-line trips
 
 Origin and destination can be on different lines (e.g. Trenton to Paoli). The

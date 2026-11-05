@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SEPTA Next Trains</title>
-    <link rel="stylesheet" href="./styles.css?v=2026-11-05-2" />
+    <link rel="stylesheet" href="./styles.css?v=2026-11-05-3" />
   </head>
   <body>
     <main class="app-shell">
@@ -27,13 +27,23 @@
         </div>
 
         <form id="trip-form" class="trip-form">
-          <label class="field">
-            <span>Origin</span>
+          <div class="field">
+            <label for="origin">Origin</label>
+            <input
+              id="origin-search"
+              class="station-search"
+              type="search"
+              placeholder="Search stations"
+              autocomplete="off"
+              aria-label="Search origin stations"
+              aria-controls="origin"
+            />
             <select id="origin" name="origin">
               <option value="marketEast">Jefferson</option>
               <option value="paoli">Paoli</option>
             </select>
-          </label>
+            <p id="origin-search-hint" class="search-hint" aria-live="polite"></p>
+          </div>
 
           <button
             id="swap-button"
@@ -44,13 +54,23 @@
             Swap
           </button>
 
-          <label class="field">
-            <span>Destination</span>
+          <div class="field">
+            <label for="destination">Destination</label>
+            <input
+              id="destination-search"
+              class="station-search"
+              type="search"
+              placeholder="Search stations"
+              autocomplete="off"
+              aria-label="Search destination stations"
+              aria-controls="destination"
+            />
             <select id="destination" name="destination">
               <option value="paoli">Paoli</option>
               <option value="marketEast">Jefferson</option>
             </select>
-          </label>
+            <p id="destination-search-hint" class="search-hint" aria-live="polite"></p>
+          </div>
 
           <button class="refresh-button" type="submit">Show trains</button>
         </form>
@@ -117,6 +137,6 @@
       </article>
     </template>
 
-    <script src="./app.js?v=2026-11-05-2"></script>
+    <script src="./app.js?v=2026-11-05-3"></script>
   </body>
 </html>
