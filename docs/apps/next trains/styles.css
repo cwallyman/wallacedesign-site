@@ -100,6 +100,7 @@ h2,
 }
 
 .field span,
+.field label,
 .detail-label,
 .train-label,
 .last-updated {
@@ -122,6 +123,38 @@ select {
   background: var(--panel-strong);
   border: 1px solid var(--border);
   color: var(--text);
+}
+
+.station-search {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--accent-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.station-search::placeholder {
+  color: var(--muted);
+}
+
+.station-search:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background: var(--panel-strong);
+}
+
+.search-hint {
+  margin: -2px 0 0;
+  font-family: Arial, sans-serif;
+  font-size: 0.8rem;
+  color: #c42a26;
+}
+
+.search-hint:empty {
+  display: none;
 }
 
 button {

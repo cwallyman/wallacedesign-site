@@ -143,31 +143,137 @@ function getStationMap() {
   return ALL_STATIONS;
 }
 
+// Lowercase and drop punctuation so "st davids" matches "St. Davids".
+function normalizeSearchText(text) {
+  return `${text || ""}`.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// Every word typed must appear in the station's label or SEPTA name
+// (so "market east" finds Jefferson).
+function stationMatchesQuery(station, query) {
+  const haystack = normalizeSearchText(`${station.label} ${station.apiName}`);
+  return query.split(" ").every((word) => haystack.includes(word));
+}
+
+// Lower is better: exact name, then name starts with the query, then a word
+// in the name starts with it, then any other match.
+function stationMatchRank(station, query) {
+  const label = normalizeSearchText(station.label);
+  if (label === query) {
+    return 0;
+  }
+  if (label.startsWith(query)) {
+    return 1;
+  }
+  if (` ${label}`.includes(` ${query}`)) {
+    return 2;
+  }
+  return 3;
+}
+
 // Current line's stations first, then every other line's remaining stations,
 // so cross-line trips (e.g. Trenton to Paoli) can be picked from either list.
-function buildStationOptionsMarkup() {
+// An optional search query limits the list to matching stations.
+function buildStationOptions(searchText = "") {
+  const query = normalizeSearchText(searchText);
   const lineIds = [currentLineId, ...Object.keys(LINE_CONFIGS).filter((id) => id !== currentLineId)];
   const listed = new Set();
+  const ids = [];
 
-  return lineIds.map((lineId) => {
+  const markup = lineIds.map((lineId) => {
     const line = LINE_CONFIGS[lineId];
     const options = line.stations
       .filter((station) => !listed.has(station.id))
-      .map((station) => {
+      .filter((station) => {
         listed.add(station.id);
+        return !query || stationMatchesQuery(station, query);
+      })
+      .map((station) => {
+        ids.push(station.id);
         return `<option value="${station.id}">${station.label}</option>`;
       })
       .join("");
     return options ? `<optgroup label="${line.title}">${options}</optgroup>` : "";
   }).join("");
+
+  return { markup, ids };
+}
+
+const stationFields = {
+  origin: {
+    select: originSelect,
+    search: document.querySelector("#origin-search"),
+    hint: document.querySelector("#origin-search-hint"),
+    other: () => destinationSelect,
+  },
+  destination: {
+    select: destinationSelect,
+    search: document.querySelector("#destination-search"),
+    hint: document.querySelector("#destination-search-hint"),
+    other: () => originSelect,
+  },
+};
+
+// Clear a field's search box and show its full station list again,
+// keeping the current selection.
+function resetStationSearch(fieldName) {
+  const field = stationFields[fieldName];
+  const current = field.select.value;
+  field.search.value = "";
+  field.hint.textContent = "";
+  field.select.innerHTML = buildStationOptions().markup;
+  if (current) {
+    field.select.value = current;
+  }
+}
+
+// Set a select's value, first clearing its search if that station is
+// filtered out of the list.
+function setStationValue(fieldName, stationId) {
+  const field = stationFields[fieldName];
+  if (!field.select.querySelector(`option[value="${stationId}"]`)) {
+    resetStationSearch(fieldName);
+  }
+  field.select.value = stationId;
+}
+
+function applyStationSearch(fieldName) {
+  const field = stationFields[fieldName];
+  const query = field.search.value;
+
+  if (!normalizeSearchText(query)) {
+    resetStationSearch(fieldName);
+    updateRouteSummary();
+    return;
+  }
+
+  const { markup, ids } = buildStationOptions(query);
+
+  if (ids.length === 0) {
+    field.hint.textContent = `No stations match "${query.trim()}"`;
+    return;
+  }
+
+  // Pick the best match; skip the station already chosen in the other
+  // field when there is another option. Ties keep list order.
+  const normalizedQuery = normalizeSearchText(query);
+  const otherValue = field.other().value;
+  const ranked = ids
+    .map((id, index) => ({ id, index, rank: stationMatchRank(ALL_STATIONS[id], normalizedQuery) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index);
+  const best = ranked.find((entry) => entry.id !== otherValue) || ranked[0];
+
+  field.hint.textContent = "";
+  field.select.innerHTML = markup;
+  field.select.value = best.id;
+  updateRouteSummary();
 }
 
 function renderStationOptions() {
   const { defaultOriginId, defaultDestinationId } = getCurrentLineConfig();
-  const markup = buildStationOptionsMarkup();
 
-  originSelect.innerHTML = markup;
-  destinationSelect.innerHTML = markup;
+  resetStationSearch("origin");
+  resetStationSearch("destination");
   originSelect.value = defaultOriginId;
   destinationSelect.value = defaultDestinationId;
 }
@@ -189,9 +295,9 @@ function ensureDifferentStations(changedField) {
 
   if (originSelect.value === destinationSelect.value) {
     if (changedField === "origin") {
-      destinationSelect.value = getFallbackStationId(originSelect.value, defaultDestinationId);
+      setStationValue("destination", getFallbackStationId(originSelect.value, defaultDestinationId));
     } else {
-      originSelect.value = getFallbackStationId(destinationSelect.value, defaultOriginId);
+      setStationValue("origin", getFallbackStationId(destinationSelect.value, defaultOriginId));
     }
   }
 }
@@ -442,6 +548,12 @@ destinationSelect.addEventListener("change", () => {
   updateRouteSummary();
 });
 
+Object.keys(stationFields).forEach((fieldName) => {
+  stationFields[fieldName].search.addEventListener("input", () => {
+    applyStationSearch(fieldName);
+  });
+});
+
 tripForm.addEventListener("submit", (event) => {
   event.preventDefault();
   refreshTrains();
@@ -452,8 +564,8 @@ swapButton.addEventListener("click", () => {
   const nextOrigin = destinationSelect.value;
   const nextDestination = originSelect.value;
 
-  originSelect.value = nextOrigin;
-  destinationSelect.value = nextDestination;
+  setStationValue("origin", nextOrigin);
+  setStationValue("destination", nextDestination);
 
   updateRouteSummary();
   refreshTrains();
