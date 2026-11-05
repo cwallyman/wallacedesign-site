@@ -82,7 +82,37 @@ const LINE_CONFIGS = {
       { id: "thirtiethStreet", label: "30th Street Station", apiName: "30th Street Station" },
     ],
   },
+  trenton: {
+    title: "Trenton Line",
+    defaultOriginId: "trenton",
+    defaultDestinationId: "marketEast",
+    stations: [
+      { id: "trenton", label: "Trenton", apiName: "Trenton" },
+      { id: "levittown", label: "Levittown", apiName: "Levittown" },
+      { id: "bristol", label: "Bristol", apiName: "Bristol" },
+      { id: "croydon", label: "Croydon", apiName: "Croydon" },
+      { id: "eddington", label: "Eddington", apiName: "Eddington" },
+      { id: "cornwellsHeights", label: "Cornwells Heights", apiName: "Cornwells Heights" },
+      { id: "torresdale", label: "Torresdale", apiName: "Torresdale" },
+      { id: "holmesburgJct", label: "Holmesburg Jct", apiName: "Holmesburg Jct" },
+      { id: "tacony", label: "Tacony", apiName: "Tacony" },
+      { id: "bridesburg", label: "Bridesburg", apiName: "Bridesburg" },
+      { id: "northPhiladelphia", label: "North Philadelphia", apiName: "North Philadelphia" },
+      { id: "thirtiethStreet", label: "30th Street Station", apiName: "30th Street Station" },
+      { id: "suburbanStation", label: "Suburban Station", apiName: "Suburban Station" },
+      { id: "marketEast", label: "Jefferson", apiName: "Market East" },
+      { id: "templeUniversity", label: "Temple University", apiName: "Temple U" },
+    ],
+  },
 };
+
+// Every station across all lines, keyed by id. Stations shared between lines
+// (Center City, Temple) use the same id everywhere, so they appear once.
+// Picking stations on different lines gives a cross-line trip; SEPTA's
+// NextToArrive API returns the connection (isdirect: "false").
+const ALL_STATIONS = Object.fromEntries(
+  Object.values(LINE_CONFIGS).flatMap((line) => line.stations.map((station) => [station.id, station]))
+);
 
 const DEFAULT_LINE_ID = "paoliThorndale";
 
@@ -110,14 +140,31 @@ function getCurrentLineConfig() {
 }
 
 function getStationMap() {
-  return Object.fromEntries(getCurrentLineConfig().stations.map((station) => [station.id, station]));
+  return ALL_STATIONS;
+}
+
+// Current line's stations first, then every other line's remaining stations,
+// so cross-line trips (e.g. Trenton to Paoli) can be picked from either list.
+function buildStationOptionsMarkup() {
+  const lineIds = [currentLineId, ...Object.keys(LINE_CONFIGS).filter((id) => id !== currentLineId)];
+  const listed = new Set();
+
+  return lineIds.map((lineId) => {
+    const line = LINE_CONFIGS[lineId];
+    const options = line.stations
+      .filter((station) => !listed.has(station.id))
+      .map((station) => {
+        listed.add(station.id);
+        return `<option value="${station.id}">${station.label}</option>`;
+      })
+      .join("");
+    return options ? `<optgroup label="${line.title}">${options}</optgroup>` : "";
+  }).join("");
 }
 
 function renderStationOptions() {
-  const { stations, defaultOriginId, defaultDestinationId } = getCurrentLineConfig();
-  const markup = stations.map(
-    (station) => `<option value="${station.id}">${station.label}</option>`
-  ).join("");
+  const { defaultOriginId, defaultDestinationId } = getCurrentLineConfig();
+  const markup = buildStationOptionsMarkup();
 
   originSelect.innerHTML = markup;
   destinationSelect.innerHTML = markup;
@@ -226,7 +273,7 @@ function classifyStatus(status) {
 }
 
 function formatDelay(delay) {
-  if (!delay || delay === "0 mins") {
+  if (!delay || delay === "0 mins" || delay.toLowerCase().includes("on time")) {
     return "On time";
   }
 
@@ -235,6 +282,31 @@ function formatDelay(delay) {
   }
 
   return `${delay} late`;
+}
+
+function renderConnection(node, train) {
+  const termStatus = formatDelay(train.term_delay);
+  const termStatusClass = classifyStatus(termStatus);
+  const termConsist = `${train.term_consist || ""}`.trim();
+  const lineName = `${train.term_line || ""}`;
+
+  node.hidden = false;
+  node.querySelector(".connection-station").textContent =
+    `Change at ${train.Connection || "transfer station"} (arrive ${train.orig_arrival_time || "--"})`;
+  node.querySelector(".connection-train").textContent =
+    `Train ${train.term_train}${lineName ? ` · ${lineName}` : ""}`;
+  node.querySelector(".connection-time").textContent =
+    `Departs ${train.term_depart_time || "--"} -> ${train.term_arrival_time || "--"}`;
+
+  const statusNode = node.querySelector(".connection-status");
+  statusNode.textContent = termStatus;
+  if (termStatusClass) {
+    statusNode.classList.add(termStatusClass);
+  }
+
+  node.querySelector(".connection-consist").textContent = termConsist
+    ? `${train.term_car_count || termConsist.split(",").filter(Boolean).length} cars: ${termConsist}`
+    : "";
 }
 
 function renderResults(trains) {
@@ -257,11 +329,20 @@ function renderResults(trains) {
       ? `${train.car_count || consist.split(",").filter(Boolean).length} cars: ${consist}`
       : "🚂 Consist unavailable";
 
+    const isConnection = `${train.isdirect}` === "false" && Boolean(train.term_train);
+    // For a connection, orig_arrival_time is the arrival at the transfer
+    // station; the trip's final arrival is the second train's arrival.
+    const finalArrival = (isConnection ? train.term_arrival_time : train.orig_arrival_time) || "--";
+
     fragment.querySelector(".train-number").textContent = train.orig_train || train.trainno || "Unknown";
     fragment.querySelector(".train-consist").textContent = consistLabel;
-    fragment.querySelector(".train-time").textContent = `${train.orig_departure_time || "--"} -> ${train.orig_arrival_time || "--"}`;
+    fragment.querySelector(".train-time").textContent = `${train.orig_departure_time || "--"} -> ${finalArrival}`;
     fragment.querySelector(".departure-time").textContent = train.orig_departure_time || "--";
-    fragment.querySelector(".arrival-time").textContent = train.orig_arrival_time || "--";
+    fragment.querySelector(".arrival-time").textContent = finalArrival;
+
+    if (isConnection) {
+      renderConnection(fragment.querySelector(".connection"), train);
+    }
 
     const statusNode = fragment.querySelector(".status-text");
     statusNode.textContent = statusText;

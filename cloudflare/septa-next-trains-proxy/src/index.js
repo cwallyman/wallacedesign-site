@@ -132,11 +132,21 @@ export default {
       const trainNumber = String(train.orig_train || train.trainno || "").trim();
       const consist = consistByTrain.get(trainNumber) || "";
 
-      return {
+      const enriched = {
         ...train,
         consist,
         car_count: consist ? consist.split(",").filter(Boolean).length : 0,
       };
+
+      // Connecting trips (isdirect === "false") have a second train.
+      const termNumber = String(train.term_train || "").trim();
+      if (termNumber) {
+        const termConsist = consistByTrain.get(termNumber) || "";
+        enriched.term_consist = termConsist;
+        enriched.term_car_count = termConsist ? termConsist.split(",").filter(Boolean).length : 0;
+      }
+
+      return enriched;
     });
 
     return jsonResponse(enrichedTrains);

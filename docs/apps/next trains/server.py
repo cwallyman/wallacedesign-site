@@ -100,13 +100,20 @@ class SeptaHandler(SimpleHTTPRequestHandler):
         for train in trains:
             train_number = str(train.get("orig_train") or train.get("trainno") or "").strip()
             consist = consist_by_train.get(train_number, "")
-            enriched_trains.append(
-                {
-                    **train,
-                    "consist": consist,
-                    "car_count": len([car for car in consist.split(",") if car]) if consist else 0,
-                }
-            )
+            enriched = {
+                **train,
+                "consist": consist,
+                "car_count": len([car for car in consist.split(",") if car]) if consist else 0,
+            }
+            # Connecting trips (isdirect == "false") have a second train.
+            term_number = str(train.get("term_train") or "").strip()
+            if term_number:
+                term_consist = consist_by_train.get(term_number, "")
+                enriched["term_consist"] = term_consist
+                enriched["term_car_count"] = (
+                    len([car for car in term_consist.split(",") if car]) if term_consist else 0
+                )
+            enriched_trains.append(enriched)
 
         body = json.dumps(enriched_trains).encode("utf-8")
         self.send_response(HTTPStatus.OK)
